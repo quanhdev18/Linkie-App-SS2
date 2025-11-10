@@ -61,6 +61,7 @@ def get_conversations(user_id: int, db: Session = Depends(get_db)):
                 "partner_avatar": avatar_url,  # link đầy đủ
                 "last_message": m.content,
                 "last_time": m.timestamp,
+                "last_sender_id": m.from_user_id,
             }
 
     return list(conv_dict.values())

@@ -6,15 +6,37 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from app.core.database import get_db
 from app.core.WebSocketConfig import ws_manager
 from app.models.MessageModel import Message
+from app.security.JwtService import JwtService
+from app.models.UserModel import Account
 
 router = APIRouter(
     tags=["Location"]
 )
 
 
-@router.websocket("/ws/chat/{user_id}")
-async def websocket_chat_endpoint(websocket: WebSocket, user_id: int, db: Session = Depends(get_db)):
+# @router.websocket("/ws/chat/{user_id}")
+# async def websocket_chat_endpoint(websocket: WebSocket, user_id: int, db: Session = Depends(get_db)):
+    # await ws_manager.connect(websocket, user_id, conn_type="chat")
+@router.websocket("/ws/chat")
+async def websocket_chat_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008)
+        return
+
+    user_email = JwtService().extract_username(token)
+    if not user_email:
+        await websocket.close(code=1008)
+        return
+
+    user = db.query(Account).filter(Account.email == user_email).first()
+    if not user:
+        await websocket.close(code=1008)
+        return
+
+    user_id = user.id
     await ws_manager.connect(websocket, user_id, conn_type="chat")
+    
 
     try:
         while True:
@@ -39,10 +61,12 @@ async def websocket_chat_endpoint(websocket: WebSocket, user_id: int, db: Sessio
             message_data = json.dumps({
                 "from_user_id": user_id,
                 "to_user_id": to_user_id,
-                "content": content
+                "content": content,
+                "type": "new_message",
             })
 
             # Gửi đến người nhận qua cả 2 kênh
+            await ws_manager.send_to(user_id, "chat", json.dumps(message_data))
             await ws_manager.send_to(to_user_id, "chat", message_data)
             await ws_manager.send_to(to_user_id, "notification", message_data)
 

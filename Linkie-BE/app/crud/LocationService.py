@@ -5,6 +5,8 @@ from app.models.LocationModel import Location
 from datetime import datetime
 from geopy.geocoders import Nominatim
 from app.schemas.UserSchema import AccountWithAvatarOut
+from app.core.redis_client import redis_client
+import json
 
 class LocationService:
 
@@ -79,15 +81,6 @@ class LocationService:
 
         return results
 
-    # @staticmethod
-    # def get_location_name(latitude, longitude):
-    #     geolocator = Nominatim(user_agent="myGeocoder")
-    #     location = geolocator.reverse((latitude, longitude), language='vi')
-
-    #     if location:
-    #         return location.address  # Trả về tên địa điểm (thành phố, quốc gia...)
-    #     else:
-    #         return "Location not found"
     @staticmethod
     def get_location_name(latitude, longitude):
         geolocator = Nominatim(user_agent="myGeocoder", timeout=10)
@@ -128,7 +121,66 @@ class LocationService:
                 return "Không rõ địa điểm"
         else:
             return "Không rõ địa điểm"
+    
+    # @staticmethod
+    # def get_location_name(latitude: float, longitude: float):
+    #     # 1️⃣ Tạo key cache Redis
+    #     cache_key = f"location:{latitude:.6f}:{longitude:.6f}"
 
+    #     # 2️⃣ Kiểm tra cache trong Redis
+    #     cached_value = redis_client.get(cache_key)
+    #     if cached_value:
+    #         return cached_value  # Đã có cache thì trả về luôn
+
+    #     # 3️⃣ Nếu chưa có trong cache -> gọi OpenStreetMap
+    #     geolocator = Nominatim(user_agent="Linkie", timeout=10)
+    #     try:
+    #         location = geolocator.reverse((latitude, longitude), language='vi')
+    #     except Exception as e:
+    #         print(f"[WARN] Lỗi khi gọi geocode: {e}")
+    #         return "Không rõ địa điểm"
+
+    #     if location:
+    #         address = location.raw.get("address", {})
+    #         # Ưu tiên phường/xã
+    #         ward = (
+    #             address.get("neighbourhood") or
+    #             address.get("suburb") or
+    #             address.get("quarter") or
+    #             address.get("village") or
+    #             address.get("hamlet") or
+    #             address.get("town")
+    #         )
+    #         # Quận/Huyện
+    #         district = (
+    #             address.get("city_district") or
+    #             address.get("district")
+    #         )
+    #         # Thành phố
+    #         city = (
+    #             address.get("city") or
+    #             address.get("municipality") or
+    #             address.get("state")
+    #         )
+
+    #         if ward and city:
+    #             result = f"{ward}, {city}"
+    #         elif district and city:
+    #             result = f"{district}, {city}"
+    #         elif city:
+    #             result = city
+    #         else:
+    #             result = "Không rõ địa điểm"
+    #     else:
+    #         result = "Không rõ địa điểm"
+
+    #     # 4️⃣ Lưu vào Redis (TTL 7 ngày = 604800 giây)
+    #     try:
+    #         redis_client.setex(cache_key, 604800, result)
+    #     except Exception as e:
+    #         print(f"[WARN] Lỗi khi lưu Redis: {e}")
+
+    #     return result 
 
     @staticmethod
     def get_location_by_account_id(account_id: int, db: Session):

@@ -135,8 +135,8 @@ from fastapi.staticfiles import StaticFiles
 from app.routers import (
     ProfileController, ImageController, AuthController,
     AccountController, LocationController, MessageController,
-    NotificationController, InteractionController,
-    package, location, ChattingController, report, matching_router
+    NotificationController, InteractionController, 
+    package, location, ChattingController, report, matching_router, AdviceController, AdminAdviceController, admin_controller
 )
 
 Base.metadata.create_all(bind=engine)
@@ -165,6 +165,9 @@ app.include_router(ChattingController.router)
 app.include_router(package.router)
 app.include_router(report.router)
 app.include_router(matching_router.router) 
+app.include_router(AdviceController.router)
+app.include_router(AdminAdviceController.router)
+app.include_router(admin_controller.router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

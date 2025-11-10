@@ -10,3 +10,4 @@ geoalchemy2
 shapely
 aioredis
 paypal-checkout-serversdk
+pygments

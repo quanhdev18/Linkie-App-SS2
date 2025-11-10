@@ -1,13 +1,7 @@
 // components/SettingsModal.jsx
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Switch,
-  StyleSheet,
-} from "react-native";
-import {deactivateAccountByEmail} from "../../services/api";
+import { View, Text, TouchableOpacity, Switch, StyleSheet } from "react-native";
+import { deactivateAccountByEmail } from "../../services/api";
 import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/Colors";
 

@@ -1,11 +1,66 @@
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// import axios from "axios";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const baseURL = "http://10.0.2.2:8000";
+// // const baseURL = "http://10.0.2.2:8000";
+// // const baseURL = "http://192.168.0.107:8000";
+
+// import * as Device from "expo-device"; // 👈 1. Import thư viện
+
+// // 2. Định nghĩa các địa chỉ IP
+// const REAL_DEVICE_IP = "192.168.0.107"; // ⚠️ Nhớ thay bằng IP của bạn
+// const EMULATOR_BASE_URL = `http://10.0.2.2:8000`;
+// const REAL_DEVICE_BASE_URL = `http://${REAL_DEVICE_IP}:8000`;
+// const WS_BASE_URL = `ws://${REAL_DEVICE_IP}:8000`;
+
+// // 3. Tự động chọn baseURL dựa trên loại thiết bị
+// // Device.isDevice sẽ là 'true' nếu là máy thật, 'false' nếu là máy ảo.
+// const baseURL = Device.isDevice ? REAL_DEVICE_BASE_URL : EMULATOR_BASE_URL;
+
+// console.log(`Connecting to API at: ${baseURL}`); // Dòng này giúp bạn kiểm tra
+
+// const api = axios.create({
+//   baseURL: baseURL,
+// });
+
+
+
+import axios from "axios";
+// import AsyncStorage from "@react--native-async-storage/async-storage";
+import * as Device from "expo-device";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// =================================================================
+
+// TỰ ĐỘNG CHỌN ĐỊA CHỈ IP DỰA TRÊN THIẾT BỊ
+
+// =================================================================
+const REAL_DEVICE_IP = "192.168.0.107";
+const API_IP = Device.isDevice ? REAL_DEVICE_IP : "10.0.2.2";
+const WS_IP = Device.isDevice ? REAL_DEVICE_IP : "10.0.2.2";
+const baseURL = `http://${API_IP}:8000`;
+const WS_BASE_URL = `ws://${WS_IP}:8000`;
+
+console.log(`✅ [API Service] Connecting to API at: ${baseURL}`);
 
 const api = axios.create({
   baseURL: baseURL,
 });
+
+api.interceptors.request.use(
+  async (config) => {
+    // Lấy token từ AsyncStorage.
+    // Tôi thấy code của bạn dùng key "access_token"
+    const token = await AsyncStorage.getItem("access_token"); 
+    
+    if (token) {
+      // Gắn token vào header Authorization
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 {
   /* Dang ky/dang nhap */
@@ -64,15 +119,6 @@ export const verifyEmail = async (data) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
 export const getLikedUsers = async (userId) => {
   try {
     const response = await api.get("/interactions/interactions", {
@@ -84,11 +130,11 @@ export const getLikedUsers = async (userId) => {
     return response.data; // VD: [12, 15, 18]
   } catch (error) {
     console.error("Lỗi khi lấy danh sách đã like:", error);
-    throw new Error(error.response?.data?.detail || "Lỗi khi lấy danh sách đã like");
+    throw new Error(
+      error.response?.data?.detail || "Lỗi khi lấy danh sách đã like"
+    );
   }
 };
-
-
 
 export const updateLocation = async (accountId, lat, lng) => {
   await api.post(`/location/update_location/${accountId}`, null, {
@@ -190,8 +236,6 @@ export const likeUser = async (likedId, likerId) => {
   }
 };
 
-
-
 {
   /* Upload anh */
 }
@@ -233,12 +277,24 @@ export const uploadProfileImage = async (profileId, imageUris) => {
   }
 };
 
-export const getProfileImage = async (title) => {
-  try {
-    return `http://10.0.2.2:8000/static/images/profile/${title}`;
-  } catch (error) {
-    throw new Error("Cannot generate profile image URL");
-  }
+// export const getProfileImage = async (title) => {
+//   try {
+//     return `http://10.0.2.2:8000/static/images/profile/${title}`;
+//   } catch (error) {
+//     throw new Error("Cannot generate profile image URL");
+//   }
+// };
+export const getProfileImage = (title) => {
+  if (!title) return null;
+  // ✅ Dùng `baseURL` động
+  return `${baseURL}/static/images/profile/${title}`;
+};
+
+export const getAvatarImage = (titleOrPath) => {
+  if (!titleOrPath) return null;
+  const filename = titleOrPath.split(/[/|\\]/).pop();
+  // ✅ Dùng `baseURL` động
+  return `${baseURL}/static/images/avatar/${filename}`;
 };
 
 export const deleteProfileImage = async (imageId) => {
@@ -251,11 +307,6 @@ export const deleteProfileImage = async (imageId) => {
     throw new Error("Delete profile image failed");
   }
 };
-
-
-
-
-
 
 export const uploadAvatar = async (email, imageUri) => {
   const formData = new FormData();
@@ -288,45 +339,11 @@ export const uploadAvatar = async (email, imageUri) => {
   }
 };
 
-// export const getAvatarImage = (title) => {
-//   return `http://10.0.2.2:8000/static/images/avatar/${title}`;
-// };
-export const getAvatarImage = (titleOrPath) => {
-  // Nếu là đường dẫn có "static/", cắt tên file ra
-  const filename = titleOrPath?.split("\\").pop(); // hoặc .split("/").pop() nếu dùng dấu /
+// export const getAvatarImage = (titleOrPath) => {
+//   // Nếu là đường dẫn có "static/", cắt tên file ra
+//   const filename = titleOrPath?.split("\\").pop(); // hoặc .split("/").pop() nếu dùng dấu /
 
-  return `http://10.0.2.2:8000/static/images/avatar/${filename}`;
-};
-
-// export const uploadAvatar = async (accountId, imageUri) => {
-//   const formData = new FormData();
-//   formData.append("file", {
-//     uri: imageUri,
-//     name: "avatar.jpg",
-//     type: "image/jpeg",
-//   });
-
-//   try {
-//     const response = await api.post(`/images/account/${accountId}`, formData, {
-//       headers: { "Content-Type": "multipart/form-data" },
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error(
-//       "Upload avatar failed",
-//       error.response?.data || error.message
-//     );
-//     throw new Error("Upload avatar failed");
-//   }
-// };
-
-// export const getAvatarImage = async (imageId) => {
-//   try {
-//     const response = await api.get(`/images/account/${imageId}`);
-//     return response;
-//   } catch (error) {
-//     throw new Error(error.response?.data?.message || "Cannot fetch avatar image");
-//   }
+//   return `http://10.0.2.2:8000/static/images/avatar/${filename}`;
 // };
 
 {
@@ -383,11 +400,6 @@ export const updateProfile = async (profile_id, data) => {
   }
 };
 
-
-
-
-
-
 // export const getWhoLikedMe = async (user_id) => {
 //   try {
 //     const res = await axios.get(`/matching/who-liked-me/${user_id}`);
@@ -397,3 +409,138 @@ export const updateProfile = async (profile_id, data) => {
 //     throw error;
 //   }
 // };
+
+// Thêm 2 hàm này vào cuối file services/api.js của bạn
+
+// ... (code cũ của bạn như login, verifyOtp, fetchMatches...)
+
+/**
+ * Lấy danh sách các cuộc hội thoại của một người dùng
+ * @param {number} accountId ID của người dùng
+ */
+export const fetchConversations = async (accountId) => {
+  try {
+    const response = await api.get(`/messages/conversations/${accountId}`);
+    return response.data; // Trả về thẳng data cho tiện
+  } catch (error) {
+    console.error("API Error: fetchConversations", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch conversations"
+    );
+  }
+};
+
+/**
+ * Xóa một cuộc hội thoại (unmatch)
+ * @param {number} partnerId ID của người mình muốn unmatch
+ * @param {number} accountId ID của chính mình
+ */
+
+
+// export const unmatchConversation = async (partnerId, accountId) => {
+//   try {
+//     const response = await api.delete(`/conversations/${partnerId}`, {
+//       params: { account_id: accountId },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     console.error("API Error: unmatchConversation", error);
+//     throw new Error(
+//       error.response?.data?.message || "Failed to unmatch conversation"
+//     );
+//   }
+// };
+
+// export const unmatchConversation = async (accountId, partnerId) => {
+//   try {
+//     const res = await api.delete(`/interactions/unmatch/${accountId}/${partnerId}`);
+//     return res.data;
+//   } catch (err) {
+//     console.error("API Error - unmatchConversation:", err.response?.data || err);
+//     throw new Error(err.response?.data?.detail || "Unmatch failed");
+//   }
+// };
+
+export const unmatchConversation = async (user1Id, user2Id) => {
+  try {
+    const res = await api.delete(`/interactions/unmatch/${user1Id}/${user2Id}`);
+    return res.data;
+  } catch (err) {
+    console.error("API Error - unmatchConversation:", err.response?.data || err);
+    throw new Error(err.response?.data?.detail || "Unmatch failed");
+  }
+};
+
+
+
+
+
+// export const getMessageHistory = async (user1_id, user2_id) => {
+//   try {
+//     const response = await apiClient.get("/messages/history", {
+//       params: {
+//         user1_id,
+//         user2_id,
+//       },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     console.error("Lỗi khi lấy lịch sử tin nhắn:", error);
+//     // Trả về mảng rỗng để không làm crash app
+//     return []; 
+//   }
+// };
+
+export const getMessageHistory = async (user1_id, user2_id) => {
+  try {
+    // SỬA LỖI TẠI ĐÂY: Dùng `api` thay vì `apiClient`
+    const response = await api.get("/messages/history", {
+      params: { user1_id, user2_id },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy lịch sử tin nhắn:", error);
+    return [];
+  }
+};
+
+// Hàm tạo kết nối WebSocket cho một user
+export const createChatSocket = (userId) => {
+  if (!userId) {
+    console.error("Cần có userId để tạo WebSocket.");
+    return null;
+  }
+  const ws = new WebSocket(`${WS_BASE_URL}/ws/chat/${userId}`);
+  return ws;
+};
+
+
+
+
+
+
+
+export const getDatingAdvice = async () => {
+  try {
+    // Dùng 'api.get' và gọi đến endpoint đã tạo ở backend
+    const response = await api.get("/dating-advice/");
+    // Trả về thẳng data (nơi chứa 'videos' và 'tips')
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || "Không thể tải nội dung.");
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+

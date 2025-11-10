@@ -1,218 +1,978 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useEffect } from "react";
-import MapPicker from "./MapPicker";
+// import { zodResolver } from "@hookform/resolvers/zod";
+// import { useForm } from "react-hook-form";
+// import { z } from "zod";
+// import { useEffect } from "react";
+// import MapPicker from "./MapPicker";
 
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+// import { Label } from "@/components/ui/label";
+// import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+// import { Button } from "@/components/ui/button";
+// import {
+//   Form,
+//   FormControl,
+//   FormField,
+//   FormItem,
+//   FormLabel,
+//   FormMessage,
+// } from "@/components/ui/form";
+// import { Input } from "@/components/ui/input";
+// import { useUserContext } from "@/lib/context/authContext/UserContext";
+// import {
+//   CREATE_USER_PROFILE,
+//   LOAD_ON_PROFILE_UPDATE,
+// } from "@/lib/context/authContext/actions";
+// import { createProfile, updateProfile } from "@/lib/actions/createProfile";
+// import Loader from "@/components/shared/Loader";
+// import { fetchProfile } from "@/lib/actions/fetchProfile";
+
+// const formSchema = z.object({
+//   dob: z.string().min(2, {
+//     message: "Date of birth must be at least 2 characters.",
+//   }),
+//   bio: z.string().min(10, {
+//     message: "Bio must be at least 10 characters.",
+//   }),
+//   location: z.string().min(1, {
+//     message: "Location cannot be empty.",
+//   }),
+//   gender: z.string().min(1, {
+//     message: "Gender must be chosen.",
+//   }),
+//   phone: z.string().min(10, {
+//     message: "Phone must be at least 10 characters.",
+//   }),
+// });
+
+// const ProfileForm = () => {
+//   const { state, dispatch } = useUserContext();
+
+//   const form = useForm<z.infer<typeof formSchema>>({
+//     resolver: zodResolver(formSchema),
+//     defaultValues: {
+//       bio: "",
+//       dob: "",
+//       location: "",
+//       gender: "",
+//       phone: "",
+//     },
+//   });
+
+//   const { setValue } = form;
+
+//   useEffect(() => {
+//     async function loadProfile() {
+//       try {
+//         const data = await fetchProfile(state.user.id);
+//         if (data) {
+//           dispatch({ type: CREATE_USER_PROFILE, payload: data });
+//           setValue("bio", data.bio);
+//           setValue("dob", data.dob);
+//           setValue("location", data.location);
+//           setValue("gender", data.gender);
+//           setValue("phone", data.phone);
+//         }
+//       } catch (error) {
+//         console.log(error);
+//       }
+//     }
+
+//     loadProfile();
+//   }, [state.user.id, dispatch, setValue]);
+
+//   async function onSubmit(values: z.infer<typeof formSchema>) {
+//     dispatch({ type: LOAD_ON_PROFILE_UPDATE });
+
+//     try {
+//       let profileData;
+
+//       if (state.user_profile.dob) {
+//         // Profile exists, update it
+//         profileData = await updateProfile(state.user_profile.id, {
+//           ...values,
+//           user: state.user.id,
+//         });
+//       } else {
+//         // Profile does not exist, create it
+//         profileData = await createProfile({
+//           ...values,
+//           user: state.user.id,
+//         });
+//       }
+
+//       dispatch({ type: CREATE_USER_PROFILE, payload: profileData?.data });
+//     } catch (error) {
+//       console.log(error);
+//     }
+
+//     dispatch({ type: LOAD_ON_PROFILE_UPDATE });
+//   }
+
+//   return (
+//     <div className="mx-auto w-3/5">
+//       <Form {...form}>
+//         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+//           <FormField
+//             control={form.control}
+//             name="bio"
+//             render={({ field }) => (
+//               <FormItem>
+//                 <FormLabel>Bio</FormLabel>
+//                 <FormControl>
+//                   <Input type="text" {...field} />
+//                 </FormControl>
+//                 <FormMessage />
+//               </FormItem>
+//             )}
+//           />
+//           <FormField
+//             control={form.control}
+//             name="dob"
+//             render={({ field }) => (
+//               <FormItem>
+//                 <FormLabel>Date of birth</FormLabel>
+//                 <FormControl>
+//                   <Input type="date" {...field} />
+//                 </FormControl>
+//                 <FormMessage />
+//               </FormItem>
+//             )}
+//           />
+//           <FormField
+//             control={form.control}
+//             name="location"
+//             render={({ field }) => (
+//               <FormItem>
+//                 <FormLabel>Location</FormLabel>
+//                 <FormControl>
+//                   <Input type="text" {...field} />
+//                 </FormControl>
+//                 <FormMessage />
+//               </FormItem>
+//             )}
+//           />
+
+//           {/* <FormField
+//             control={form.control}
+//             name="location"
+//             render={({ field }) => (
+//               <FormItem>
+//                 <FormLabel>Location</FormLabel>
+//                 <FormControl>
+//                   <MapPicker
+//                     onLocationSelect={(location) => {
+//                       field.onChange(`${location.lat}, ${location.lng}`);
+//                     }}
+//                   />
+//                 </FormControl>
+//                 <FormMessage />
+//               </FormItem>
+//             )}
+//           /> */}
+//           <FormField
+//             control={form.control}
+//             name="gender"
+//             render={({ field }) => (
+//               <>
+//                 <RadioGroup
+//                   value={field.value} // Set the selected value
+//                   onValueChange={field.onChange} // Update the value when selection changes
+//                   className="flex justify-around"
+//                 >
+//                   <div className="flex items-center space-x-2">
+//                     <RadioGroupItem value="M" id="option-one" />
+//                     <Label htmlFor="option-one">Male</Label>
+//                   </div>
+//                   <div className="flex items-center space-x-2">
+//                     <RadioGroupItem value="F" id="option-two" />
+//                     <Label htmlFor="option-two">Female</Label>
+//                   </div>
+//                 </RadioGroup>
+//                 <FormMessage />
+//               </>
+//             )}
+//           />
+//           <FormField
+//             control={form.control}
+//             name="phone"
+//             render={({ field }) => (
+//               <FormItem>
+//                 <FormLabel>Phone</FormLabel>
+//                 <FormControl>
+//                   <Input type="tel" {...field} />
+//                 </FormControl>
+//                 <FormMessage />
+//               </FormItem>
+//             )}
+//           />
+//           <Button className="w-full" type="submit">
+//             {state.isUpdatingProfile ? <Loader /> : ""}
+//             {state.user_profile.dob === ""
+//               ? "Create profile"
+//               : "Update profile"}
+//           </Button>
+//         </form>
+//       </Form>
+//     </div>
+//   );
+// };
+
+// export default ProfileForm;
+
+// import React from "react";
+// import { Link } from "react-router-dom";
+
+// // Component con cho các mục trong "My Basics" (cho code sạch hơn)
+// const BasicInfoItem = ({ icon, label, value }) => (
+//   <div className="flex items-center justify-between py-3 px-4 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
+//     <div className="flex items-center gap-3">
+//       {icon}
+//       <span className="text-sm font-medium">{label}</span>
+//     </div>
+//     <div className="flex items-center gap-2">
+//       <span className="text-sm text-gray-600">{value}</span>
+//       {value === "" && (
+//         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-gray-400">
+//           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+//         </svg>
+//       )}
+//     </div>
+//   </div>
+// );
+
+// const PhotoSlot = ({ src = "", isMain = false }) => (
+//   <div
+//     className={`relative aspect-square rounded-xl border-2 ${src ? "border-transparent" : "border-dashed border-gray-300"
+//       } flex items-center justify-center overflow-hidden`}
+//   >
+//     {src ? (
+//       <img src={src} alt="profile" className="w-full h-full object-cover" />
+//     ) : (
+//       <svg
+//         xmlns="http://www.w3.org/2000/svg"
+//         fill="none"
+//         viewBox="0 0 24 24"
+//         strokeWidth={1.5}
+//         stroke="currentColor"
+//         className="w-8 h-8 text-gray-400"
+//       >
+//         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+//       </svg>
+//     )}
+
+//     {src && (
+//       <button className="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:bg-gray-100">
+//         <svg
+//           xmlns="http://www.w3.org/2000/svg"
+//           fill="none"
+//           viewBox="0 0 24 24"
+//           strokeWidth={1.5}
+//           stroke="currentColor"
+//           className="w-4 h-4 text-gray-500"
+//         >
+//           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+//         </svg>
+//       </button>
+//     )}
+//   </div>
+// );
+
+// // Component chính
+// const ProfileForm: React.FC = () => {
+//   // Dữ liệu mẫu (sau này bạn sẽ lấy từ state/API)
+//   const userPhotos = [
+//     "https://placehold.co/300x400/E2E8F0/94A3B8?text=Main", // Ảnh chính
+//     "https://placehold.co/100x100/E2E8F0/94A3B8?text=Photo+2",
+//     "https://placehold.co/100x100/E2E8F0/94A3B8?text=Photo+3",
+//   ];
+
+//   return (
+//     <div className="flex w-full h-screen bg-white justify-center itema-center relative">
+//         <header className="h-16 flex items-center justify-center border-b">
+//           <div className="text-yellow-500 font-bold text-xl">Date profile</div>
+//         </header>
+//       {/* 2. NỘI DUNG CHÍNH (Bên trong Profile) */}
+//       <main className="bg-white  rounded-2xl p-8 w-full max-w-2xl overflow-y-auto no-scrollbar">
+
+//         {/* KHUNG ẢNH CHÍNH & LƯỚI ẢNH THỨ CẤP */}
+//         <div className="w-full max-w-md">
+//           <div className="flex gap-3">
+//             {/* Ảnh chính */}
+//             <div className="flex-[2]">
+//               <PhotoSlot src={userPhotos[0]} isMain />
+//             </div>
+
+//             {/* Lưới ảnh phụ */}
+//             <div className="flex-[1] grid grid-cols-1 gap-3">
+//               <PhotoSlot src={userPhotos[1]} />
+//               <PhotoSlot src={userPhotos[2]} />
+//             </div>
+//           </div>
+
+//           {/* Hàng ô trống bên dưới */}
+//           <div className="grid grid-cols-3 gap-3 mt-3">
+//             <PhotoSlot />
+//             <PhotoSlot />
+//             <PhotoSlot />
+//           </div>
+
+//           <button className="mt-4 w-full border rounded-full py-3 font-medium hover:bg-gray-50">
+//             Preview profile →
+//           </button>
+//         </div>
+
+//         {/* Nút Verify */}
+//         <h2 className="text-lg font-semibold mb-3">Xác thực</h2>
+//         <button className="mt-6 w-full max-w-lg bg-blue-500 text-white font-semibold py-3 rounded-lg">
+//           Account Verified
+//         </button>
+
+//         {/* Các mục thông tin */}
+//         <div className="max-w-lg mt-8 space-y-6">
+
+//           {/* About Me */}
+//           <section>
+//             <h2 className="text-lg font-semibold mb-3">Về tôi</h2>
+//             <textarea
+//               className="w-full h-24 p-3 border border-gray-300 rounded-lg"
+//               placeholder="Only here. Nào rảnh..."
+//             ></textarea>
+//           </section>
+
+//           {/* My Basics */}
+//           <section>
+//             <h2 className="text-lg font-semibold mb-3">My Basics</h2>
+//             <div className="space-y-2">
+//               <BasicInfoItem
+//                 icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0L15 15" /></svg>}
+//                 label="Height"
+//                 value="178 cm"
+//               />
+//               <BasicInfoItem
+//                 icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.362-3.871A8.25 8.25 0 0 1 15.362 5.214Z" /></svg>}
+//                 label="Exercise"
+//                 value="Active"
+//               />
+//               <BasicInfoItem
+//                 icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c.502 0 .997-.013 1.482-.04M12 21c-.502 0-.997-.013-1.482-.04M12 3a9.004 9.004 0 0 0-8.716 6.747M12 3a9.004 9.004 0 0 1 8.716 6.747M12 3c.502 0 .997.013 1.482.04M12 3c-.502 0-.997.013-1.482.04M6.096 9.75H17.904M6.096 14.25H17.904" /></svg>}
+//                 label="Education level"
+//                 value="In college"
+//               />
+//               <BasicInfoItem
+//                 icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21.75l5.25-5.25h-3.75v-6h-3v6H6.75l5.25 5.25Z" /></svg>}
+//                 label="Drinking"
+//                 value="Frequently"
+//               />
+//               <BasicInfoItem
+//                 icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>}
+//                 label="Smoking"
+//                 value="Never"
+//               />
+//               <BasicInfoItem
+//                 icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>}
+//                 label="Looking for"
+//                 value="Relationship"
+//               />
+//               <BasicInfoItem
+//                 icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>}
+//                 label="Kids"
+//                 value="Don't want"
+//               />
+//               <BasicInfoItem
+//                 icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.31h5.518a.562.562 0 0 1 .321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.021a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.021a.563.563 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988H8.88a.563.563 0 0 0 .475-.31L11.48 3.5Z" /></svg>}
+//                 label="Star sign"
+//                 value=""
+//               />
+//               {/* Thêm các mục khác tại đây... */}
+//             </div>
+//           </section>
+
+//           {/* Your gender */}
+//           <section>
+//             <h2 className="text-lg font-semibold mb-3">Your gender</h2>
+//             <div className="space-y-2">
+//               <div className="flex items-center justify-between py-3 px-4 rounded-lg border border-gray-200">
+//                 <label htmlFor="gender-woman" className="text-sm font-medium">Woman</label>
+//                 <input id="gender-woman" type="radio" name="gender" className="h-4 w-4 text-yellow-500" />
+//               </div>
+//               <div className="flex items-center justify-between py-3 px-4 rounded-lg border-2 border-yellow-500 bg-yellow-50">
+//                 <label htmlFor="gender-man" className="text-sm font-medium text-yellow-700">Man</label>
+//                 <input id="gender-man" type="radio" name="gender" className="h-4 w-4 text-yellow-500" defaultChecked />
+//               </div>
+//             </div>
+//           </section>
+
+//           <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-full shadow-lg transition">
+//             Xác nhận
+//           </button>
+
+
+//         </div>
+
+//       </main>
+
+//     </div>
+//   );
+// };
+
+// export default ProfileForm;
+
+// import React from "react";
+// import { useNavigate } from "react-router-dom"; // 🟢 thêm useNavigate
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import {
+//   faXmark,
+// } from "@fortawesome/free-solid-svg-icons";
+// // Component con cho các mục trong "My Basics"
+// const BasicInfoItem = ({ icon, label, value }) => (
+//   <div className="flex items-center justify-between py-3 px-4 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
+//     <div className="flex items-center gap-3">
+//       {icon}
+//       <span className="text-sm font-medium">{label}</span>
+//     </div>
+//     <div className="flex items-center gap-2">
+//       <span className="text-sm text-gray-600">{value}</span>
+//       {value === "" && (
+//         <svg
+//           xmlns="http://www.w3.org/2000/svg"
+//           fill="none"
+//           viewBox="0 0 24 24"
+//           strokeWidth={2}
+//           stroke="currentColor"
+//           className="w-5 h-5 text-gray-400"
+//         >
+//           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+//         </svg>
+//       )}
+//     </div>
+//   </div>
+// );
+
+// const PhotoSlot = ({ src = "", isMain = false }) => (
+//   <div
+//     className={`relative aspect-square rounded-xl border-2 ${src ? "border-transparent" : "border-dashed border-gray-300"
+//       } flex items-center justify-center overflow-hidden`}
+//   >
+//     {src ? (
+//       <img src={src} alt="profile" className="w-full h-full object-cover" />
+//     ) : (
+//       <svg
+//         xmlns="http://www.w3.org/2000/svg"
+//         fill="none"
+//         viewBox="0 0 24 24"
+//         strokeWidth={1.5}
+//         stroke="currentColor"
+//         className="w-8 h-8 text-gray-400"
+//       >
+//         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+//       </svg>
+//     )}
+
+//     {src && (
+//       <button className="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:bg-gray-100">
+//         <svg
+//           xmlns="http://www.w3.org/2000/svg"
+//           fill="none"
+//           viewBox="0 0 24 24"
+//           strokeWidth={1.5}
+//           stroke="currentColor"
+//           className="w-4 h-4 text-gray-500"
+//         >
+//           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+//         </svg>
+//       </button>
+//     )}
+//   </div>
+// );
+
+// const ProfileForm: React.FC = () => {
+//   const navigate = useNavigate();
+//   const userPhotos = [
+//     "https://placehold.co/300x400/E2E8F0/94A3B8?text=Main",
+//     "https://placehold.co/100x100/E2E8F0/94A3B8?text=Photo+2",
+//     "https://placehold.co/100x100/E2E8F0/94A3B8?text=Photo+3",
+//   ];
+
+//   return (
+//     <div className="flex flex-col items-center w-full h-screen bg-white overflow-hidden">
+//       {/* 🔸 Header cố định trên đầu */}
+//       <header className="sticky top-0 z-10 w-full h-16 flex items-center justify-center border-b bg-white">
+//         <div className="text-yellow-500 font-bold text-xl">Date profile</div>
+//         <FontAwesomeIcon
+//           icon={faXmark}
+//           className="cursor-pointer hover:text-red-500 transition absolute right-5"
+//           onClick={() => navigate("/home")} // ⬅️ quay lại Home
+//         />
+//       </header>
+
+//       {/* 🔹 Nội dung chính */}
+//       <main className="flex-1 overflow-y-auto w-full flex justify-center p-6 no-scrollbar">
+//         <div className="bg-white rounded-2xl p-6 w-full max-w-2xl">
+//           {/* Phần ẢNH */}
+//           <div className="w-full max-w-md mx-auto">
+//             <div className="flex gap-3">
+//               <div className="flex-[2]">
+//                 <PhotoSlot src={userPhotos[0]} isMain />
+//               </div>
+//               <div className="flex-[1] grid grid-cols-1 gap-3">
+//                 <PhotoSlot src={userPhotos[1]} />
+//                 <PhotoSlot src={userPhotos[2]} />
+//               </div>
+//             </div>
+
+//             <div className="grid grid-cols-3 gap-3 mt-3">
+//               <PhotoSlot />
+//               <PhotoSlot />
+//               <PhotoSlot />
+//             </div>
+
+//             <button className="mt-4 w-full border rounded-full py-3 font-medium hover:bg-gray-50">
+//               Preview profile →
+//             </button>
+//           </div>
+
+//           {/* ✅ Các phần dưới đây bọc chung max-w-md */}
+//           <div className="w-full max-w-md mx-auto">
+//             {/* XÁC THỰC */}
+//             <h2 className="text-lg font-semibold mb-3 mt-8">Xác thực</h2>
+//             <button className="w-full bg-blue-500 text-white font-semibold py-3 rounded-lg hover:bg-blue-600">
+//               Account Verified
+//             </button>
+
+//             {/* ABOUT ME */}
+//             <div className="mt-8">
+//               <h2 className="text-lg font-semibold mb-3">Giới thiệu bản thân</h2>
+//               <textarea
+//                 className="w-full h-24 p-3 border border-gray-300 rounded-lg"
+//                 placeholder="Only here. Nào rảnh..."
+//               ></textarea>
+//             </div>
+
+//             {/* MY BASICS */}
+//             <section className="mt-8 space-y-2">
+//               <h2 className="text-lg font-semibold mb-3">Thông tin cơ bản</h2>
+//               <BasicInfoItem label="Giới tính" value="" icon={<></>} />
+//               <BasicInfoItem label="Sở thích" value="" icon={<></>} />
+//               <BasicInfoItem label="Mục đích hẹn hò" value="" icon={<></>} />
+//               <BasicInfoItem label="Chiều cao (Comming soon)" value="" icon={<></>} />
+//               <BasicInfoItem label="Khuynh hướng hẹn hò (Comming soon)" value="" icon={<></>} />
+//               <BasicInfoItem label="Cung hoàng đạo (Comming soon)" value="" icon={<></>} />
+//             </section>
+
+//             {/* 🔸 Nút xác nhận cuối */}
+//             <div className="mt-10 mb-4 pb-10">
+//               <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-full shadow-lg transition">
+//                 Lưu thay đổi
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </main>
+
+//     </div>
+//   );
+// };
+
+// export default ProfileForm;
+
+
+
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import {
+  uploadProfileImage,
+  getProfileImage,
+  getProfileById,
+  updateProfile,
+  deleteProfileImage,
+} from "@/services/api";
+import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useUserContext } from "@/lib/context/authContext/UserContext";
-import {
-  CREATE_USER_PROFILE,
-  LOAD_ON_PROFILE_UPDATE,
-} from "@/lib/context/authContext/actions";
-import { createProfile, updateProfile } from "@/lib/actions/createProfile";
-import Loader from "@/components/shared/Loader";
-import { fetchProfile } from "@/lib/actions/fetchProfile";
 
-const formSchema = z.object({
-  dob: z.string().min(2, {
-    message: "Date of birth must be at least 2 characters.",
-  }),
-  bio: z.string().min(10, {
-    message: "Bio must be at least 10 characters.",
-  }),
-  location: z.string().min(1, {
-    message: "Location cannot be empty.",
-  }),
-  gender: z.string().min(1, {
-    message: "Gender must be chosen.",
-  }),
-  phone: z.string().min(10, {
-    message: "Phone must be at least 10 characters.",
-  }),
-});
+const GENDER_OPTIONS = { male: "Nam", female: "Nữ" };
+const HOBBY_OPTIONS = {
+  listening_to_music: "Nghe nhạc",
+  singing: "Hát",
+  playing_guitar: "Chơi guitar",
+  running: "Chạy bộ",
+  yoga: "Yoga",
+  reading: "Đọc sách",
+  cooking: "Nấu ăn",
+  photography: "Chụp ảnh",
+  traveling: "Du lịch",
+  video_games: "Chơi game",
+  dog_lover: "Yêu chó",
+  meditation: "Thiền",
+  fashion: "Thời trang",
+  blogging: "Viết blog",
+};
+const PURPOSE_OPTIONS = [
+  "Người yêu",
+  "Một người bạn đời",
+  "Quan hệ không ràng buộc",
+  "Những người bạn mới",
+  "Mình cũng chưa rõ lắm",
+];
+
+const BasicInfoItem = ({ label, value, onClick }) => (
+  <div
+    onClick={onClick}
+    className="flex items-center justify-between py-3 px-4 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
+  >
+    <span className="text-sm font-medium">{label}</span>
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-gray-600 truncate max-w-[140px]">
+        {value || "Chưa chọn"}
+      </span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-5 h-5 text-gray-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={2}
+        stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+    </div>
+  </div>
+);
+
+const PhotoSlot = ({ src, onAdd, onRemove }) => (
+  <div className="relative aspect-square rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+    {src ? (
+      <>
+        <img src={src} alt="profile" className="w-full h-full object-cover" />
+        <button
+          onClick={onRemove}
+          className="absolute top-2 right-2 bg-white rounded-full shadow hover:bg-gray-100 
+             flex items-center justify-center w-7 h-7"
+        >
+          <FontAwesomeIcon icon={faXmark} className="text-gray-600 w-4 h-4" />
+        </button>
+
+      </>
+    ) : (
+      <button onClick={onAdd}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+          className="w-8 h-8 text-gray-400"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </button>
+    )}
+  </div>
+);
 
 const ProfileForm = () => {
-  const { state, dispatch } = useUserContext();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      bio: "",
-      dob: "",
-      location: "",
-      gender: "",
-      phone: "",
-    },
-  });
-
-  const { setValue } = form;
+  const [photos, setPhotos] = useState(Array(6).fill(null));
+  const [bio, setBio] = useState("");
+  const [gender, setGender] = useState("");
+  const [hobby, setHobby] = useState<string[]>([]);
+  const [purpose, setPurpose] = useState("");
+  const [modalField, setModalField] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadProfile() {
+    const fetchProfile = async () => {
       try {
-        const data = await fetchProfile(state.user.id);
-        if (data) {
-          dispatch({ type: CREATE_USER_PROFILE, payload: data });
-          setValue("bio", data.bio);
-          setValue("dob", data.dob);
-          setValue("location", data.location);
-          setValue("gender", data.gender);
-          setValue("phone", data.phone);
+        const id = localStorage.getItem("profile_id");
+        if (!id) throw new Error("Không tìm thấy profile_id");
+        setProfileId(id);
+        const data = await getProfileById(id);
+        setBio(data.bio || "");
+        setGender(GENDER_OPTIONS[data.gender] || "");
+        setHobby((data.hobby || []).map((key) => HOBBY_OPTIONS[key]));
+        setPurpose(data.target_type || "");
+
+        const urls = [];
+        if (data.images?.length) {
+          for (const img of data.images) {
+            const url = await getProfileImage(img.title);
+            urls.push({ uri: url, id: img.id });
+          }
         }
-      } catch (error) {
-        console.log(error);
+        setPhotos([...urls, ...Array(6 - urls.length).fill(null)]);
+      } catch (e) {
+        toast({
+          title: "Lỗi tải hồ sơ",
+          description: e.message,
+          variant: "destructive",
+        });
       }
-    }
+    };
+    fetchProfile();
+  }, []);
 
-    loadProfile();
-  }, [state.user.id, dispatch, setValue]);
+  const pickImage = async (index: number) => {
+    if (!profileId) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        try {
+          await uploadProfileImage(profileId, [file]);
+          toast({ title: "Tải ảnh lên thành công!", variant: "success" });
+          window.location.reload();
+        } catch (err) {
+          toast({
+            title: "Lỗi upload ảnh",
+            description: err.message,
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    input.click();
+  };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    dispatch({ type: LOAD_ON_PROFILE_UPDATE });
-
+  const removePhoto = async (index: number) => {
+    const photo = photos[index];
+    if (!photo?.id) return;
     try {
-      let profileData;
-
-      if (state.user_profile.dob) {
-        // Profile exists, update it
-        profileData = await updateProfile(state.user_profile.id, {
-          ...values,
-          user: state.user.id,
-        });
-      } else {
-        // Profile does not exist, create it
-        profileData = await createProfile({
-          ...values,
-          user: state.user.id,
-        });
-      }
-
-      dispatch({ type: CREATE_USER_PROFILE, payload: profileData?.data });
-    } catch (error) {
-      console.log(error);
+      await deleteProfileImage(photo.id);
+      const newList = [...photos];
+      newList[index] = null;
+      setPhotos(newList);
+      toast({ title: "Đã xoá ảnh" });
+    } catch (e) {
+      toast({
+        title: "Lỗi xoá ảnh",
+        description: e.message,
+        variant: "destructive",
+      });
     }
+  };
 
-    dispatch({ type: LOAD_ON_PROFILE_UPDATE });
-  }
+  const saveProfile = async () => {
+    if (!profileId) return;
+    try {
+      const payload = {
+        bio,
+        gender: Object.keys(GENDER_OPTIONS).find(
+          (k) => GENDER_OPTIONS[k] === gender
+        ),
+        target_type: purpose,
+        hobby: hobby.map((vi) =>
+          Object.keys(HOBBY_OPTIONS).find((k) => HOBBY_OPTIONS[k] === vi)
+        ),
+      };
+      await updateProfile(profileId, payload);
+      toast({ title: "Cập nhật thành công!", variant: "success" });
+    } catch (e) {
+      toast({
+        title: "Lỗi cập nhật",
+        description: e.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openModal = (field: string) => {
+    setModalField(field);
+    setModalVisible(true);
+  };
+
+  const handleSelectValue = (value) => {
+    if (modalField === "gender") setGender(value);
+    if (modalField === "purpose") setPurpose(value);
+    if (modalField === "hobby") {
+      setHobby((prev) =>
+        prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]
+      );
+    }
+  };
 
   return (
-    <div className="mx-auto w-3/5">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-          <FormField
-            control={form.control}
-            name="bio"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bio</FormLabel>
-                <FormControl>
-                  <Input type="text" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="dob"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Date of birth</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Location</FormLabel>
-                <FormControl>
-                  <Input type="text" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <div className="flex flex-col items-center w-full h-screen bg-white overflow-hidden">
+      {/* Header */}
+      <header className="sticky top-0 z-10 w-full h-16 flex items-center justify-center border-b bg-white">
+        <div className="text-yellow-500 font-bold text-xl">Hồ sơ hẹn hò</div>
+        <FontAwesomeIcon
+          icon={faXmark}
+          className="cursor-pointer hover:text-red-500 transition absolute right-5"
+          onClick={() => navigate("/home")}
+        />
+      </header>
 
-          {/* <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Location</FormLabel>
-                <FormControl>
-                  <MapPicker
-                    onLocationSelect={(location) => {
-                      field.onChange(`${location.lat}, ${location.lng}`);
+      <main className="flex-1 overflow-y-auto w-full flex justify-center p-6">
+        <div className="bg-white rounded-2xl p-6 w-full max-w-2xl">
+          {/* Ảnh */}
+          <div className="w-full max-w-md mx-auto">
+            <div className="flex gap-3">
+              <div className="flex-[2]">
+                <PhotoSlot
+                  src={photos[0]?.uri}
+                  onAdd={() => pickImage(0)}
+                  onRemove={() => removePhoto(0)}
+                />
+              </div>
+              <div className="flex-[1] grid grid-cols-1 gap-3">
+                <PhotoSlot
+                  src={photos[1]?.uri}
+                  onAdd={() => pickImage(1)}
+                  onRemove={() => removePhoto(1)}
+                />
+                <PhotoSlot
+                  src={photos[2]?.uri}
+                  onAdd={() => pickImage(2)}
+                  onRemove={() => removePhoto(2)}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mt-3">
+              {photos.slice(3, 6).map((p, i) => (
+                <PhotoSlot
+                  key={i}
+                  src={p?.uri}
+                  onAdd={() => pickImage(i + 3)}
+                  onRemove={() => removePhoto(i + 3)}
+                />
+              ))}
+            </div>
+
+            {/* <button className="mt-4 w-full border rounded-full py-3 font-medium hover:bg-gray-50">
+              Xem trước hồ sơ →
+            </button> */}
+            <button
+              onClick={() => navigate("/profile/preview")}
+              className="mt-4 w-full border rounded-full py-3 font-medium hover:bg-gray-50"
+            >
+              Xem trước hồ sơ →
+            </button>
+
+            <h2 className="text-lg font-semibold  mt-5">Xác thực</h2>
+            <button className="mt-4 w-full border rounded-full py-3 font-medium hover:bg-gray-50">
+              Xác thực hồ sơ
+            </button>
+          </div>
+
+
+          {/* Bio */}
+          <div className="mt-5 max-w-md mx-auto">
+            <h2 className="text-lg font-semibold mb-5">Giới thiệu bản thân</h2>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              className="w-full h-24 p-3 border border-gray-300 rounded-lg"
+              placeholder="Viết gì đó về bạn..."
+            />
+          </div>
+
+          {/* Thông tin cơ bản */}
+          <section className="mt-5 max-w-md mx-auto space-y-2">
+            <h2 className="text-lg font-semibold mb-5">Thông tin cơ bản</h2>
+            <BasicInfoItem
+              label="Giới tính"
+              value={gender}
+              onClick={() => openModal("gender")}
+            />
+            <BasicInfoItem
+              label="Sở thích"
+              value={hobby.join(", ")}
+              onClick={() => openModal("hobby")}
+            />
+            <BasicInfoItem
+              label="Mục đích hẹn hò"
+              value={purpose}
+              onClick={() => openModal("purpose")}
+            />
+            <BasicInfoItem label="Chiều cao (Comming soon)" value="" icon={<></>} />
+            <BasicInfoItem label="Khuynh hướng hẹn hò (Comming soon)" value="" icon={<></>} />
+            <BasicInfoItem label="Cung hoàng đạo (Comming soon)" value="" icon={<></>} />
+          </section>
+
+          {/* Nút lưu */}
+          <div className="mt-10 mb-4 pb-10">
+            <Button
+              onClick={saveProfile}
+              className="w-60 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-full shadow-lg flex mx-auto"
+            >
+              Lưu thay đổi
+            </Button>
+          </div>
+        </div>
+      </main>
+
+      {modalVisible && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-[95%] max-w-md sm:max-w-lg md:max-w-xl shadow-xl">
+            <h2 className="text-xl font-semibold mb-4 capitalize text-center">
+              Chọn {modalField === "gender"
+                ? "giới tính"
+                : modalField === "purpose"
+                  ? "mục đích"
+                  : "sở thích"}
+            </h2>
+
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {modalField === "gender" &&
+                Object.values(GENDER_OPTIONS).map((opt) => (
+                  <Button
+                    key={opt}
+                    onClick={() => {
+                      handleSelectValue(opt);
+                      setModalVisible(false);
                     }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          /> */}
-          <FormField
-            control={form.control}
-            name="gender"
-            render={({ field }) => (
-              <>
-                <RadioGroup
-                  value={field.value} // Set the selected value
-                  onValueChange={field.onChange} // Update the value when selection changes
-                  className="flex justify-around"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="M" id="option-one" />
-                    <Label htmlFor="option-one">Male</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="F" id="option-two" />
-                    <Label htmlFor="option-two">Female</Label>
-                  </div>
-                </RadioGroup>
-                <FormMessage />
-              </>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input type="tel" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button className="w-full" type="submit">
-            {state.isUpdatingProfile ? <Loader /> : ""}
-            {state.user_profile.dob === ""
-              ? "Create profile"
-              : "Update profile"}
-          </Button>
-        </form>
-      </Form>
+                    variant={gender === opt ? "default" : "outline"}
+                    className="w-80 py-3 text-base justify-center items-center mx-auto justify-self-center items-center flex"
+                  >
+                    {opt}
+                  </Button>
+                ))}
+
+              {modalField === "purpose" &&
+                PURPOSE_OPTIONS.map((opt) => (
+                  <Button
+                    key={opt}
+                    onClick={() => {
+                      handleSelectValue(opt);
+                      setModalVisible(false);
+                    }}
+                    variant={purpose === opt ? "default" : "outline"}
+                    className="w-80 py-3 text-base justify-center items-center mx-auto justify-self-center items-center flex"
+                  >
+                    {opt}
+                  </Button>
+                ))}
+
+              {modalField === "hobby" &&
+                Object.values(HOBBY_OPTIONS).map((opt) => (
+                  <Button
+                    key={opt}
+                    onClick={() => handleSelectValue(opt)}
+                    variant={hobby.includes(opt) ? "default" : "outline"}
+                    className="w-80 py-3 text-base justify-center items-center mx-auto justify-self-center items-center flex"
+                  >
+                    {opt}
+                  </Button>
+                ))}
+            </div>
+
+            <Button
+              onClick={() => setModalVisible(false)}
+              className="mt-5 w-40 py-3 text-base bg-gray-200 hover:bg-gray-300 text-gray-800 justify-center items-center mx-auto justify-self-center items-center flex"
+            >
+              Đóng
+            </Button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

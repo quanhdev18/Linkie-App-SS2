@@ -15,28 +15,6 @@ def create_package(db: Session, data: PackageCreate):
 def get_all_packages(db: Session):
     return db.query(Package).all()
 
-# def create_purchase(db: Session, user_id: int, package_id: int, vnp_txn_ref: str):
-#     purchase = Purchase(
-#         user_id=user_id,
-#         package_id=package_id,
-#         status="pending",
-#         vnp_txn_ref=vnp_txn_ref
-#     )
-#     db.add(purchase)
-#     db.commit()
-#     db.refresh(purchase)
-#     return purchase
-
-# def update_purchase_status(db: Session, vnp_txn_ref: str, status: str, vnp_transaction_no: str):
-#     purchase = db.query(Purchase).filter(Purchase.vnp_txn_ref == vnp_txn_ref).first()
-#     if purchase:
-#         purchase.status = status
-#         purchase.vnp_transaction_no = vnp_transaction_no
-#         db.commit()
-#         db.refresh(purchase)
-#     return purchase
-# app/crud/package.py
-
 def create_purchase_paypal(db: Session, user_id: int, package_id: int, paypal_order_id: str):
     purchase = Purchase(
         user_id=user_id,
@@ -54,6 +32,29 @@ def update_purchase_status_paypal(db: Session, paypal_order_id: str, status: str
     if purchase:
         purchase.status = status
         purchase.paypal_transaction_id = paypal_transaction_id
+        db.commit()
+        db.refresh(purchase)
+    return purchase
+
+
+def create_purchase_stripe(db: Session, user_id: int, package_id: int, stripe_payment_intent: str):
+    purchase = Purchase(
+        user_id=user_id,
+        package_id=package_id,
+        status="pending",
+        stripe_payment_intent=stripe_payment_intent
+    )
+    db.add(purchase)
+    db.commit()
+    db.refresh(purchase)
+    return purchase
+
+
+def update_purchase_status_stripe(db: Session, stripe_payment_intent: str, status: str, stripe_transaction_id: str):
+    purchase = db.query(Purchase).filter(Purchase.stripe_payment_intent == stripe_payment_intent).first()
+    if purchase:
+        purchase.status = status
+        purchase.stripe_transaction_id = stripe_transaction_id
         db.commit()
         db.refresh(purchase)
     return purchase

@@ -75,3 +75,12 @@ h2 {
     @apply bg-background text-foreground;
   }
 }
+
+/* Thêm class này để ẩn thanh cuộn */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

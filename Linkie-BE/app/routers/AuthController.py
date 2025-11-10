@@ -26,6 +26,10 @@ def register_user(user: AccountRegister, db: Session = Depends(get_db)):
 def verify_otp_and_login(request: VerifyOtpRequest, db: Session = Depends(get_db)):
     return AuthService.verify_otp_and_login(request, db)
 
+@router.post("/login-admin", response_model=AuthResponse)
+def login_user(request: VerifyOtpRequest, db: Session = Depends(get_db)):
+    return AuthService.verify_otp_and_login_admin(request, db)  # dành cho user
+
 @router.post("/verify-email", response_model=AuthResponse)
 def verify_email(request: VerifyOtpRequest, db: Session = Depends(get_db)):
     return AuthService.verify_email_by_otp(request, db)

@@ -54,6 +54,8 @@ export default function SignIn() {
         },
       });
     } catch (error) {
+      setErrEmail("Email chưa được đăng ký");
+
       Toast.show({
         type: "error",
         text1: "Email chưa được đăng ký",

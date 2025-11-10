@@ -17,7 +17,7 @@ import DatingAdvice from "@/components/profile/DatingAdvice";
 import { useRouter } from "expo-router";
 import SettingsModal from "../Screen/settingScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getProfileById, getAvatarImage } from "../../services/api";
+import { getProfileById, getAvatarImage, getPackages } from "../../services/api";
 import defaultAvatar from "../../assets/images/image.png";
 
 const PLANS = [
@@ -38,7 +38,7 @@ const Profile = () => {
   const [switchValue, setSwitchValue] = useState(false);
   const [profile, setProfile] = useState(null);
   const [avatarUri, setAvatarUri] = useState(null);
-  
+  const [packages, setPackages] = useState([]);
   const toggleSwitch = () => setSwitchValue((prev) => !prev);
   const headerbutton = () => (
     <AntDesign
@@ -71,6 +71,27 @@ const Profile = () => {
 
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const data = await getPackages();
+
+        // ✅ Lọc chỉ giữ 1 bản cho mỗi nhóm: Newbie, Plus, Boost, Premium
+        const uniqueNames = ["Newbie", "Plus", "Boost", "Premium"];
+        const filtered = uniqueNames
+          .map((name) => data.find((pkg) => pkg.name === name))
+          .filter(Boolean);
+
+        setPackages(filtered);
+      } catch (error) {
+        console.error("Lỗi khi tải packages:", error);
+      }
+    };
+
+    fetchPackages();
+  }, []);
+
 
   console.log(avatarUri);
 
@@ -173,39 +194,37 @@ const Profile = () => {
                   columnGap: 8,
                 }}
               >
-                <View style={styles.planCard}>
-                  <Text style={{ fontWeight: "bold", textAlign: "center" }}>
-                    Premium+
-                  </Text>
-                  <Text style={{ fontWeight: "300", textAlign: "center" }}>
-                    Nhận được gói VIP và tận hưởng những cách tốt hơn để kết nối với những người tuyệt vời
-                  </Text>
-                  <Button
-                    style={{ backgroundColor: "#1c1c1c" }}
-                    textStyle={{ color: "#ebebeb" }}
-                  >
-                    Khám phá Premium+
-                  </Button>
-                </View>
-                <View style={styles.planCard}>
-                  <Text style={{ fontWeight: "bold", textAlign: "center" }}>
-                    Premium
-                  </Text>
-                  <Text style={{ fontWeight: "300", textAlign: "center" }}>
-                    Mở khóa thêm nhiều tính năng để nâng cao trải nghiệm của bạn
-                  </Text>
-                  <Button
-                    style={{ backgroundColor: "#1c1c1c" }}
-                    textStyle={{ color: "#ebebeb" }}
-                  >
-                    Khám phá Premium
-                  </Button>
-                </View>
+                {packages.length > 0 ? (
+                  packages.map((pkg) => (
+                    <View key={pkg.id} style={styles.planCard}>
+                      <Text style={{ fontWeight: "bold", textAlign: "center" }}>
+                        {pkg.name}
+                      </Text>
+                      <Text
+                        style={{ fontWeight: "300", textAlign: "center" }}
+                        numberOfLines={2}
+                      >
+                        {pkg.description}
+                      </Text>
+                      {/* <Text style={{ fontWeight: "600", marginTop: 6 }}>
+                        {pkg.price.toLocaleString("vi-VN")}đ / {pkg.duration_days} ngày
+                      </Text> */}
+                      <Button
+                        style={{ backgroundColor: "#1c1c1c" }}
+                        textStyle={{ color: "#ebebeb" }}
+                      >
+                        Đăng ký {pkg.name} ngay
+                      </Button>
+                    </View>
+                  ))
+                ) : (
+                  <Text>Đang tải gói...</Text>
+                )}
               </ScrollView>
             </View>
 
             {/* Table */}
-            <View style={styles.table}>
+            {/* <View style={styles.table}>
               <View style={styles.tableItem}>
                 <Text style={[styles.row1, { fontWeight: "bold" }]}>
                   What you get:
@@ -239,11 +258,97 @@ const Profile = () => {
                   </View>
                 </View>
               ))}
+            </View> */}
+
+            {/* Table - Cột trái cố định + phần phải cuộn ngang */}
+            <View style={styles.tableContainer}>
+              {/* Cột trái cố định */}
+              <View style={styles.leftColumn}>
+                <View style={styles.leftHeader}>
+                  <Text style={[styles.leftText, { fontWeight: "bold" }]}>What you get:</Text>
+                </View>
+                {PLANS.map((planitem) => (
+                  <View key={planitem.plan} style={styles.leftRow}>
+                    <Text style={[styles.leftText, { fontWeight: "300" }]}>{planitem.plan}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Cột phải cuộn ngang */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ flexDirection: "row" }}
+              >
+                {/* Cột Premium+ */}
+                <View style={styles.rightColumn}>
+                  <View style={styles.rightHeader}>
+                    <Text style={styles.headerText}>Premium+</Text>
+                  </View>
+                  {PLANS.map((planitem, index) => (
+                    <View key={index} style={styles.rightRow}>
+                      <Ionicons
+                        name="checkmark-outline"
+                        size={24}
+                        color={planitem.p1 ? "black" : "#bdb9b9"}
+                      />
+                    </View>
+                  ))}
+                </View>
+
+                {/* Cột Premium */}
+                <View style={styles.rightColumn}>
+                  <View style={styles.rightHeader}>
+                    <Text style={styles.headerText}>Premium</Text>
+                  </View>
+                  {PLANS.map((planitem, index) => (
+                    <View key={index} style={styles.rightRow}>
+                      <Ionicons
+                        name="checkmark-outline"
+                        size={24}
+                        color={planitem.p2 ? "black" : "#bdb9b9"}
+                      />
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.rightColumn}>
+                  <View style={styles.rightHeader}>
+                    <Text style={styles.headerText}>Premium</Text>
+                  </View>
+                  {PLANS.map((planitem, index) => (
+                    <View key={index} style={styles.rightRow}>
+                      <Ionicons
+                        name="checkmark-outline"
+                        size={24}
+                        color={planitem.p2 ? "black" : "#bdb9b9"}
+                      />
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.rightColumn}>
+                  <View style={styles.rightHeader}>
+                    <Text style={styles.headerText}>Premium</Text>
+                  </View>
+                  {PLANS.map((planitem, index) => (
+                    <View key={index} style={styles.rightRow}>
+                      <Ionicons
+                        name="checkmark-outline"
+                        size={24}
+                        color={planitem.p2 ? "black" : "#bdb9b9"}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
             </View>
+
           </>
         )
           : (
-            <View style={{ marginTop: 20, alignItems: "center" }}>
+            <View style={{
+              marginTop: 20, marginHorizontal: -18
+              // alignItems: "center"
+            }}>
               {/* <Text style={{ fontSize: 18, fontWeight: "600" }}>
               Dating Advice
             </Text>
@@ -304,18 +409,132 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 10,
   },
-  tableItem: {
-    flexDirection: "row",
-    borderBottomWidth: 2,
-    paddingVertical: 5,
-    borderColor: "#f0eded",
-  },
-  row1: { width: "50%" },
-  row2: { width: "25%", alignItems: "center" },
-  row3: { width: "25%", alignItems: "center" },
-  headerCol: { width: "25%", alignItems: "center" },
-  headerText: { fontWeight: "bold" },
-  table: { width: "100%", gap: 4, marginTop: 10 },
+
+  // tableItem: {
+  //   flexDirection: "row",
+  //   borderBottomWidth: 2,
+  //   paddingVertical: 5,
+  //   borderColor: "#f0eded",
+  // },
+  // row1: { width: "50%" },
+  // row2: { width: "25%", alignItems: "center" },
+  // row3: { width: "25%", alignItems: "center" },
+  // headerCol: { width: "25%", alignItems: "center" },
+  // headerText: { fontWeight: "bold" },
+  // table: { width: "100%", gap: 4, marginTop: 10 },
+  // tableContainer: {
+  //   flexDirection: "row",
+  //   marginTop: 15,
+  //   borderTopWidth: 2,
+  //   borderColor: "#f0eded",
+  // },
+
+  // leftColumn: {
+  //   width: "45%", // cột trái cố định
+  //   borderRightWidth: 2,
+  //   borderColor: "#f0eded",
+  // },
+
+  // leftHeader: {
+  //   paddingVertical: 8,
+  //   borderBottomWidth: 2,
+  //   borderColor: "#f0eded",
+  // },
+
+  // leftRow: {
+  //   paddingVertical: 6,
+  //   borderBottomWidth: 1,
+  //   borderColor: "#f0eded",
+  // },
+
+  // leftText: {
+  //   fontSize: 13,
+  //   color: "#1c1c1c",
+  // },
+
+  // rightColumn: {
+  //   width: 120,
+  //   borderRightWidth: 2,
+  //   borderColor: "#f0eded",
+  //   alignItems: "center",
+  // },
+
+  // rightHeader: {
+  //   paddingVertical: 8,
+  //   borderBottomWidth: 2,
+  //   borderColor: "#f0eded",
+  //   alignItems: "center",
+  // },
+
+  // rightRow: {
+  //   paddingVertical: 6,
+  //   borderBottomWidth: 1,
+  //   borderColor: "#f0eded",
+  //   alignItems: "center",
+  //   justifyContent: "center",
+  // },
+
+  // headerText: {
+  //   fontWeight: "bold",
+  //   fontSize: 14,
+  // },
+  tableContainer: {
+  flexDirection: "row",
+  marginTop: 15,
+  // ❌ bỏ borderTopWidth và borderColor
+},
+
+leftColumn: {
+  width: "45%", // cột trái cố định
+  // ❌ bỏ borderRightWidth và borderColor
+  paddingRight: 8,
+},
+
+leftHeader: {
+  paddingVertical: 8,
+  // ❌ bỏ borderBottomWidth và borderColor
+  marginBottom: 6,
+},
+
+leftRow: {
+  paddingVertical: 6,
+  // ❌ bỏ borderBottomWidth và borderColor
+  marginBottom: 8,
+},
+
+leftText: {
+  fontSize: 13,
+  color: "#1c1c1c",
+},
+
+rightColumn: {
+  width: 120,
+  // ❌ bỏ borderRightWidth và borderColor
+  alignItems: "center",
+  marginRight: 10,
+},
+
+rightHeader: {
+  paddingVertical: 8,
+  // ❌ bỏ borderBottomWidth và borderColor
+  alignItems: "center",
+  marginBottom: 6,
+},
+
+rightRow: {
+  paddingVertical: 6,
+  // ❌ bỏ borderBottomWidth và borderColor
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 8,
+},
+
+headerText: {
+  fontWeight: "bold",
+  fontSize: 14,
+},
+
+
   editButton: {
     marginTop: 8,
     paddingVertical: 8,

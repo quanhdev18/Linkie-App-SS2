@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, Query
 from app.models.UserModel import Account
 from app.models.ProfileModel import Profile
 from app.models.InteractionModel import Like, Match
@@ -7,6 +7,56 @@ from datetime import datetime, timedelta, date
 
 
 class MatchingService:
+    @staticmethod
+    def _get_base_recommendation_query(
+        db: Session, 
+        user_profile: Profile, 
+        excluded_ids: set
+    ) -> Query:
+        """
+        Hàm helper này CHỈ xây dựng query, KHÔNG thực thi.
+        Đây chính là bước "lọc sơ qua" của bạn.
+        """
+        
+        # 1. Lọc theo ID đã loại trừ
+        query = db.query(Account).join(Profile).filter(
+            Account.id.notin_(excluded_ids),
+            Profile.id.isnot(None)
+        )
+        
+        # 2. Lọc theo GIỚI TÍNH mà user muốn tìm
+        if user_profile.pref_gender:
+            # Giả sử pref_gender là một list, vd: ['male', 'female']
+            # Và Profile.gender là Enum
+            query = query.filter(Profile.gender.in_(user_profile.pref_gender))
+
+        # 3. Lọc theo ĐỘ TUỔI mà user muốn tìm
+        if user_profile.pref_min_age and user_profile.pref_max_age:
+            today = date.today()
+            
+            # Tính ngày sinh tối thiểu (người trẻ nhất, vd: 18 tuổi)
+            min_birth_date = today.replace(year=today.year - user_profile.pref_min_age)
+            
+            # Tính ngày sinh tối đa (người già nhất, vd: 35 tuổi)
+            max_birth_date = today.replace(year=today.year - user_profile.pref_max_age - 1)
+            
+            query = query.filter(
+                Profile.date_of_birth.between(max_birth_date, min_birth_date)
+            )
+            
+        # 4. Lọc theo VỊ TRÍ (Rất quan trọng cho app dating)
+        # Giả sử bạn đã thêm pref_location_city vào Profile
+        if user_profile.pref_location_city:
+            query = query.filter(Profile.location_city == user_profile.pref_location_city)
+        
+        # 5. (Tùy chọn) Lọc những người có ít nhất 1 SỞ THÍCH chung
+        # Cần kiểu dữ liệu ARRAY của PostgreSQL
+        # if user_profile.hobby:
+        #     query = query.filter(Profile.hobby.overlap(user_profile.hobby))
+
+        return query
+    
+    
     """
     Service xử lý thuật toán matching cho app hẹn hò
     Tích hợp với InteractionService để tự động cập nhật đề xuất
@@ -93,49 +143,48 @@ class MatchingService:
                 score += 5
         
         return min(score, 100)
-    
+
+
     @staticmethod
     def get_recommended_matches(
         db: Session, 
         user_id: int, 
-        limit: int = 20,
-        min_score: float = 30.0,
-        exclude_ids: Optional[List[int]] = None
+        page: int = 1,          # Thay 'limit' bằng 'page'
+        page_size: int = 20,    # và 'page_size'
+        min_score: float = 30.0
     ) -> List[Dict]:
-        """
-        Lấy danh sách user được đề xuất dựa trên thuật toán matching
-        Tự động loại trừ những người đã like/match
-        """
+        
         current_user = db.query(Account).filter(Account.id == user_id).first()
         if not current_user or not current_user.profile:
             return []
         
-        # Lấy danh sách user đã like
-        liked_ids = [like.liked_id for like in 
-                    db.query(Like).filter(Like.liker_id == user_id).all()]
+        # Lấy danh sách loại trừ (giống code cũ của bạn)
+        liked_ids = [like.liked_id for like in db.query(Like.liked_id).filter(Like.liker_id == user_id).all()]
         
-        # Lấy danh sách đã match
-        matched_ids = []
         matches = db.query(Match).filter(
             (Match.user1_id == user_id) | (Match.user2_id == user_id)
         ).all()
-        for match in matches:
-            matched_ids.append(
-                match.user2_id if match.user1_id == user_id else match.user1_id
-            )
+        matched_ids = [
+            match.user2_id if match.user1_id == user_id else match.user1_id
+            for match in matches
+        ]
         
-        # Merge với exclude_ids nếu có
         excluded_ids = set(liked_ids + matched_ids + [user_id])
-        if exclude_ids:
-            excluded_ids.update(exclude_ids)
         
-        # Lấy candidates
-        candidates = db.query(Account).join(Profile).filter(
-            Account.id.notin_(excluded_ids),
-            Profile.id.isnot(None)
-        ).all()
+        # ---- THAY ĐỔI LỚN BẮT ĐẦU TỪ ĐÂY ----
         
-        # Tính điểm và format
+        # 1. Lấy query "lọc sơ qua"
+        base_query = MatchingService._get_base_recommendation_query(
+            db, current_user.profile, excluded_ids
+        )
+        
+        # 2. Áp dụng PHÂN TRANG ở mức Database
+        offset = (page - 1) * page_size
+        
+        # CHỈ lấy ra 20 user (hoặc page_size) đã được lọc
+        candidates = base_query.offset(offset).limit(page_size).all()
+        
+        # 3. Tính điểm cho tập hợp NHỎ (chỉ 20 người)
         scored_candidates = []
         for candidate in candidates:
             if candidate.profile:
@@ -145,33 +194,22 @@ class MatchingService:
                 )
                 
                 if score >= min_score:
-                    age = None
-                    if candidate.profile.date_of_birth:
-                        age = MatchingService.calculate_age(candidate.profile.date_of_birth)
-                    
-                    avatar_url = None
-                    if candidate.profile.avatar:
-                        avatar_url = candidate.profile.avatar.url if hasattr(candidate.profile.avatar, 'url') else None
-                    
-                    hobbies = []
-                    if candidate.profile.hobby:
-                        hobbies = [str(h.value) if hasattr(h, 'value') else str(h) 
-                                  for h in candidate.profile.hobby]
-                    
+                    # ... (copy code format output của bạn vào đây) ...
+                    age = ...
+                    avatar_url = ...
+                    hobbies = ...
                     scored_candidates.append({
                         'account_id': candidate.id,
-                        'username': candidate.profile.username,
-                        'age': age,
-                        'gender': str(candidate.profile.gender.value) if candidate.profile.gender else None,
-                        'bio': candidate.profile.bio,
-                        'hobbies': hobbies,
-                        'avatar': avatar_url,
+                        # ... (các trường khác) ...
                         'compatibility_score': round(score, 2),
-                        'image_count': len(candidate.profile.images) if candidate.profile.images else 0
                     })
         
+        # 4. Sắp xếp danh sách NHỎ (chỉ 20 người)
         scored_candidates.sort(key=lambda x: x['compatibility_score'], reverse=True)
-        return scored_candidates[:limit]
+        
+        # Trả về kết quả
+        # (Bạn có thể trả về dict phân trang giống hàm get_discovery_feed)
+        return scored_candidates
     
     @staticmethod
     def get_next_suggestion(db: Session, user_id: int, skip_ids: List[int] = None) -> Optional[Dict]:

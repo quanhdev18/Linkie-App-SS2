@@ -23,24 +23,30 @@ const Select = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const interests = [
-    "Nghe nhạc",
-    "Hát",
-    "Nấu ăn",
-    "Chạy bộ ",
-    "Du lịch",
-    "Thiền",
-    "Yêu chó",
-    "traveling",
-    "fashion",
+    { label: "Nghe nhạc", value: "listening_to_music" },
+    { label: "Hát", value: "singing" },
+    { label: "Chơi đàn guitar", value: "playing_guitar" },
+    { label: "Chạy bộ", value: "running" },
+    { label: "Yoga", value: "yoga" },
+    { label: "Đọc sách", value: "reading" },
+    { label: "Nấu ăn", value: "cooking" },
+    { label: "Chụp ảnh", value: "photography" },
+    { label: "Du lịch", value: "traveling" },
+    { label: "Chơi game", value: "video_games" },
+    { label: "Yêu chó", value: "dog_lover" },
+    { label: "Thiền", value: "meditation" },
+    { label: "Thời trang", value: "fashion" },
+    { label: "Viết blog", value: "blogging" },
   ];
 
-  const toggleInterest = (interest) => {
+
+  const toggleInterest = (value) => {
     let updatedInterests;
-    if (selectedInterests.includes(interest)) {
-      updatedInterests = selectedInterests.filter((item) => item !== interest);
+    if (selectedInterests.includes(value)) {
+      updatedInterests = selectedInterests.filter((item) => item !== value);
     } else {
       if (selectedInterests.length < 5) {
-        updatedInterests = [...selectedInterests, interest];
+        updatedInterests = [...selectedInterests, value];
       } else {
         return;
       }
@@ -81,9 +87,12 @@ const Select = () => {
         gender: gender === "1" ? "male" : "female",
         date_of_birth: formattedBirth || "",
         bio: bio || "",
-        target_type: target?.value || "",
         hobby: selectedInterests || [],
       };
+
+      if (target?.value) {
+        profileData.target_type = target.value;
+      }
 
       console.log("Dữ liệu gửi đi:", profileData);
 
@@ -122,17 +131,16 @@ const Select = () => {
           </Text>
 
           <View style={styles.interestsContainer}>
-            {interests.map((interest, index) => (
+            {interests.map(({ label, value }, index) => (
               <TouchableOpacity
                 key={index}
                 style={[
                   styles.interestButton,
-                  selectedInterests.includes(interest) &&
-                    styles.selectedInterest,
+                  selectedInterests.includes(value) && styles.selectedInterest,
                 ]}
-                onPress={() => toggleInterest(interest)}
+                onPress={() => toggleInterest(value)}
               >
-                <Text style={styles.interestText}>{interest}</Text>
+                <Text style={styles.interestText}>{label}</Text>
               </TouchableOpacity>
             ))}
           </View>

@@ -1,7 +1,7 @@
 # app/routers/user.py
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -10,7 +10,7 @@ from app.schemas.ProfileDTO import ProfileCreate, ProfileUpdate
 from app.schemas.ProfileDTO import ProfileOut
 from app.security.AuthDependency import get_current_account
 from app.models.UserModel import Account
-
+from app.models.ProfileModel import Profile
 router = APIRouter(prefix="/profiles", tags=["Profiles"], dependencies=[Depends(get_current_account)])
 
 
@@ -37,3 +37,11 @@ def remove_profile(profile_id: int, db: Session = Depends(get_db)):
 @router.get("/{profile_id}", response_model=ProfileOut)
 def read_profile_by_id(profile_id: int, db: Session = Depends(get_db)):
     return get_profile_by_id(db=db, profile_id=profile_id)
+# @router.get("/profiles/{id}") 
+# def read_profile_by_id(id: int, db: Session = Depends(get_db)): # (Biến "id" ở đây là account_id)
+    
+#     profile = db.query(Profile).filter(Profile.account_id == id).first() 
+    
+#     if not profile:
+#         raise HTTPException(status_code=404, detail="Profile not found for this account")
+#     return profile

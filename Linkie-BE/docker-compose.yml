@@ -1,7 +1,6 @@
-
 services:
   postgres:
-    image: postgis/postgis:15-3.3  # PostgreSQL + PostGIS
+    image: postgis/postgis:15-3.3 # PostgreSQL + PostGIS
     container_name: postgres
     restart: always
     environment:

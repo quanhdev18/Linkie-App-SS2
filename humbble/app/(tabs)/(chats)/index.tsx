@@ -883,7 +883,7 @@ import Avatar from "@/components/Avatar";
 import { useFocusEffect, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { fetchMatches, getAvatarImage } from "../../../services/api";
+import { fetchMatches, getAvatarImage, fetchConversations, unmatchConversation } from "../../../services/api";
 import defaultAvatar from "../../../assets/images/image.png";
 import { Swipeable } from "react-native-gesture-handler";
 import { Colors } from "@/constants/Colors";
@@ -936,13 +936,14 @@ const Chats = () => {
             const parsedId = parseInt(storedId, 10);
             setAccountId(parsedId);
 
-            const [matchRes, convRes] = await Promise.all([
+            // 👇 Sửa lại đoạn này
+            const [matchRes, conversationsData] = await Promise.all([
               fetchMatches(parsedId),
-              axios.get(`http://10.0.2.2:8000/messages/conversations/${parsedId}`),
+              fetchConversations(parsedId), // Gọi hàm mới
             ]);
 
             setMatches(matchRes);
-            setConversations(convRes.data);
+            setConversations(conversationsData); // Không cần .data nữa
           }
         } catch (error) {
           console.error("Lỗi khi load dữ liệu:", error);
@@ -951,25 +952,11 @@ const Chats = () => {
         }
       };
       loadData();
+      // ...
       return () => { };
     }, [])
   );
 
-  // const goToChat = (toUserId: number, toUsername: string, avatarObj: any) => {
-  //   if (!toUserId || !accountId) return;
-  //   const avatarUrl = avatarObj
-  //     ? getAvatarImage(avatarObj.title || avatarObj)
-  //     : null;
-  //   router.push({
-  //     pathname: "/Screen/Message",
-  //     params: {
-  //       userId: accountId,
-  //       toUserId,
-  //       toUsername,
-  //       toAvatarUrl: avatarUrl,
-  //     },
-  //   });
-  // };
   const goToChat = (toUserId: number, toUsername: string, avatarObj: any) => {
     if (!toUserId || !accountId) return;
     setSearchVisible(false); // ✅ đóng search khi mở chat
@@ -995,15 +982,20 @@ const Chats = () => {
       params: {
         reporterId: accountId.toString(),
         reportedId: reportedUserId.toString(),
+        from: "chats",
       },
     });
   };
 
   const handleUnmatch = async (partnerId: number) => {
+    if (!accountId) return; // Thêm kiểm tra cho chắc chắn
+
     try {
-      await axios.delete(
-        `http://10.0.2.2:8000/conversations/${partnerId}?account_id=${accountId}`
-      );
+      // 👇 Sửa lại đoạn này
+      // await unmatchConversation(partnerId, accountId); 
+      await unmatchConversation(accountId, partnerId); // ✅ đúng
+
+
       setConversations((prev) =>
         prev.filter((conv) => conv.partner_id !== partnerId)
       );

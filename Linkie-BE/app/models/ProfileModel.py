@@ -17,6 +17,10 @@ class Profile(Base):
     hobby = Column(
         ARRAY(Enum(HobbyEnum, name="hobbyenum", validate_strings=True)),
     )
+    pref_min_age = Column(Integer, default=18)
+    pref_max_age = Column(Integer, default=35)
+    pref_gender = Column(ARRAY(String), default=['male', 'female', 'other']) # Giới tính user muốn tìm
+    pref_location_city = Column(String, index=True)
     avatar_id = Column(Integer, ForeignKey("account_avatar.id", ondelete="SET NULL"), nullable=True)
     avatar = relationship("AccountAvatar", foreign_keys=[avatar_id])
     # One-to-many: profile → images
@@ -24,3 +28,8 @@ class Profile(Base):
     account_id = Column(Integer, ForeignKey("account.id"))
     account = relationship("Account", back_populates="profile")
     # user_location = relationship("UserLocation", backref="account", uselist=False, cascade="all, delete-orphan")
+    
+    
+    
+    
+    

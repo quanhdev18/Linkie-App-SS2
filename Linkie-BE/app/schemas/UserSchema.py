@@ -20,6 +20,7 @@ class AuthResponse(BaseModel):
     refresh_token: str
     account_id: int
     profile_id: Optional[int] = None
+    role: Optional[str] = None
 
 class UserRole(str, Enum):
     ADMIN = "ADMIN"

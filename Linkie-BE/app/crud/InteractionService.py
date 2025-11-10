@@ -6,7 +6,7 @@ from app.models.ProfileModel import Profile
 from app.models.InteractionModel import Like, Match
 from sqlalchemy.orm import joinedload
 from app.crud.MatchingService import MatchingService 
-
+from app.models.InteractionModel import Match
 class InteractionService:
     @staticmethod
     def like_user(db: Session, liker_id: int, liked_id: int) -> dict:
@@ -31,6 +31,15 @@ class InteractionService:
                     ((Match.user1_id == liked_id) & (Match.user2_id == liker_id))
                 ).first()
 
+                # if not existing_match:
+                #     new_match = Match(
+                #         user1_id=min(liker_id, liked_id),
+                #         user2_id=max(liker_id, liked_id),
+                #         matched_at=datetime.utcnow()
+                #     )
+                #     db.add(new_match)
+                #     db.commit()
+                #     return {"message": "Match vừa được tạo từ lượt like cũ!", "match": True}
                 if not existing_match:
                     new_match = Match(
                         user1_id=min(liker_id, liked_id),
@@ -39,7 +48,26 @@ class InteractionService:
                     )
                     db.add(new_match)
                     db.commit()
-                    return {"message": "Match vừa được tạo từ lượt like cũ!", "match": True}
+
+                    # ✅ TẠO CONVERSATION NGAY SAU KHI MATCH
+                    # from app.models.InteractionModel import Match
+
+                    existing_convo = db.query(Match).filter(
+                        ((Match.user1_id == liker_id) & (Match.user2_id == liked_id)) |
+                        ((Match.user1_id == liked_id) & (Match.user2_id == liker_id))
+                    ).first()
+
+                    if not existing_convo:
+                        convo = Match(
+                            user1_id=min(liker_id, liked_id),
+                            user2_id=max(liker_id, liked_id),
+                            created_at=datetime.utcnow()
+                        )
+                        db.add(convo)
+                        db.commit()
+
+                    return {"message": "It's a match!", "match": True}
+
 
             return {"message": "Already liked this user.", "match": False}
 
@@ -120,3 +148,77 @@ class InteractionService:
     @staticmethod
     def get_likes_by_user(db: Session, user_id: int):
         return db.query(Like).filter(Like.liker_id == user_id).all()
+
+    @staticmethod
+    def unmatch_users(db: Session, user1_id: int, user2_id: int):
+        """
+        Hủy match và xóa toàn bộ message + like giữa 2 tài khoản
+        """
+        # Xóa match (cả hai chiều)
+        deleted_match = db.query(Match).filter(
+            ((Match.user1_id == user1_id) & (Match.user2_id == user2_id)) |
+            ((Match.user1_id == user2_id) & (Match.user2_id == user1_id))
+        ).delete()
+
+        # Xóa tin nhắn (cả hai chiều)
+        from app.models.MessageModel import Message
+        deleted_messages = db.query(Message).filter(
+            ((Message.from_user_id == user1_id) & (Message.to_user_id == user2_id)) |
+            ((Message.from_user_id == user2_id) & (Message.to_user_id == user1_id))
+        ).delete()
+
+        # Xóa like giữa hai người
+        from app.models.InteractionModel import Like
+        deleted_likes = db.query(Like).filter(
+            ((Like.liker_id == user1_id) & (Like.liked_id == user2_id)) |
+            ((Like.liker_id == user2_id) & (Like.liked_id == user1_id))
+        ).delete()
+
+        db.commit()
+
+        if not (deleted_match or deleted_messages or deleted_likes):
+            raise HTTPException(status_code=404, detail="Không tìm thấy kết nối nào để hủy.")
+
+        return {
+            "message": "Đã hủy match và xóa toàn bộ hội thoại.",
+            "deleted_match": deleted_match,
+            "deleted_messages": deleted_messages,
+            "deleted_likes": deleted_likes
+        }
+
+    @staticmethod
+    def get_users_who_liked_me(db: Session, user_id: int):
+        """
+        Trả về danh sách người đã thích mình, nhưng mình chưa thích họ lại.
+        """
+        from app.models.InteractionModel import Like
+        from app.models.UserModel import Account
+
+        # Lấy tất cả người đã like mình
+        liked_me = db.query(Like).filter(Like.liked_id == user_id).all()
+
+        # Lọc ra những người mình chưa like lại
+        user_ids = [
+            like.liker_id for like in liked_me
+            if not db.query(Like).filter(
+                Like.liker_id == user_id,
+                Like.liked_id == like.liker_id
+            ).first()
+        ]
+
+        # Lấy thông tin tài khoản kèm profile
+        users = db.query(Account).options(joinedload(Account.profile)).filter(
+            Account.id.in_(user_ids),
+            Account.is_activated == True
+        ).all()
+
+        result = []
+        for user in users:
+            result.append({
+                "id": user.id,
+                "username": user.profile.username if user.profile else "Ẩn danh",
+            })
+
+        return result
+    
+

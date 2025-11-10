@@ -22,10 +22,13 @@ class Settings(BaseSettings):
     MAIL_PORT: int
     MAIL_SERVER: str
     MAIL_FROM_NAME: Optional[str] = "Linkie"
+    
+    stripe_secret_key: str = "sk_test_yourkey"
 
     model_config = {
         "env_file": ".env",
-        "env_file_encoding": "utf-8"
+        "env_file_encoding": "utf-8",
+        
     }
 
 # Dùng như Singleton
