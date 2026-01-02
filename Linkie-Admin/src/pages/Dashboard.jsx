@@ -179,19 +179,32 @@ const Dashboard = () => {
       unit: "",
     },
     {
-      name: "Doanh thu (VND)",
+      name: "Doanh thu tháng này (VND)",
       number: revenue,
       icon: <ArrowUpOutlined className="text-xl text-green-700" />,
       color: "#3f8600",
       unit: "VNĐ",
     },
     {
-      name: "Interest Rate",
+      name: "Tăng trưởng doanh thu (%)",
       number: interestRate,
-      icon: <ArrowDownOutlined className="text-xl text-red-700" />,
-      color: "#cf1322",
+      icon:
+        interestRate >= 0 ? (
+          <ArrowUpOutlined className="text-xl text-green-700" />
+        ) : (
+          <ArrowDownOutlined className="text-xl text-red-700" />
+        ),
+      color: interestRate >= 0 ? "#3f8600" : "#cf1322",
       unit: "%",
     },
+
+    // {
+    //   name: "Interest Rate",
+    //   number: interestRate,
+    //   icon: <ArrowDownOutlined className="text-xl text-red-700" />,
+    //   color: "#cf1322",
+    //   unit: "%",
+    // },
   ];
 
   return (
@@ -219,12 +232,12 @@ const Dashboard = () => {
         <div className="lg:w-1/3 pr-0 lg:pr-2 mb-4 lg:mb-0">
           <ChartPie />
         </div>
-        <div className="lg:w-2/3 pl-0 lg:pl-2">
+        <div className="lg:w-2/3 pl-0 lg:pl-2 ">
           <RevenueCard />
         </div>
       </div>
       <div className="my-6">
-          <RadarChart />
+        <RadarChart />
       </div>
     </div>
   );

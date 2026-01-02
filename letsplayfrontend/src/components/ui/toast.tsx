@@ -50,6 +50,8 @@ const toastVariants = cva(
         // ✅ Thêm success variant ở đây:
         success:
           "group border-green-500 bg-green-500 text-white",
+        warning:
+          "group border-orange-500 bg-orange-500 text-white",
       },
     },
     defaultVariants: {

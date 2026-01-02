@@ -6,6 +6,8 @@ from app.crud.InteractionService import InteractionService
 from app.crud.AccountService import get_account_by_id
 from app.schemas.interation import MatchedUserOut, LikeOut
 from fastapi import Query
+from app.models.UserModel import Account
+from app.schemas.interation import LikedUserDetailOut
 
 router = APIRouter(prefix="/interactions", tags=["Interactions"])
 
@@ -54,7 +56,7 @@ def unmatch_users(user1_id: int, user2_id: int, db: Session = Depends(get_db)):
     result = InteractionService.unmatch_users(db, user1_id, user2_id)
     return result
 
-@router.get("/liked-me/{user_id}", response_model=List[MatchedUserOut])
+@router.get("/liked-me/{user_id}", response_model=List[LikedUserDetailOut])
 def get_users_who_liked_me(user_id: int, db: Session = Depends(get_db)):
     """
     Lấy danh sách người đã like mình, nhưng mình chưa like họ lại.

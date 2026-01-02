@@ -7,8 +7,8 @@ function ToolBar() {
    
 
     return (
-        <div className="w-full h-[4rem] bg-gray-200 flex justify-between items-center">
-            <div className="w-1/5 h-full flex items-center justify-center">
+        <div className="w-full h-[4rem] flex justify-between items-center">
+            <div className="w-1/5 h-full flex items-center justify-center pt-4">
                 <Button
                     className='mx-3'
                     type="primary"

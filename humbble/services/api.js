@@ -28,11 +28,7 @@ import axios from "axios";
 // import AsyncStorage from "@react--native-async-storage/async-storage";
 import * as Device from "expo-device";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// =================================================================
 
-// TỰ ĐỘNG CHỌN ĐỊA CHỈ IP DỰA TRÊN THIẾT BỊ
-
-// =================================================================
 const REAL_DEVICE_IP = "192.168.0.107";
 const API_IP = Device.isDevice ? REAL_DEVICE_IP : "10.0.2.2";
 const WS_IP = Device.isDevice ? REAL_DEVICE_IP : "10.0.2.2";
@@ -61,6 +57,40 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+export const requestPose = async (accountId) => {
+  try {
+    const response = await api.post(`/verify/request-pose?account_id=${accountId}`);
+    return response.data;
+  } catch (error) {
+    const errData = error.response?.data;
+    console.log("❌ Lỗi request pose:", errData);
+    const message =
+      errData?.detail?.[0]?.msg ||
+      JSON.stringify(errData) ||
+      "Lỗi không xác định";
+    throw message;
+  }
+};
+
+
+
+export const sendVerifyRequest = async ({ account_id, pose_key, fileUri }) => {
+  const formData = new FormData();
+
+  formData.append("account_id", account_id.toString());
+  formData.append("pose_key", pose_key);
+
+  formData.append("file", {
+    uri: fileUri,
+    name: `verify_${account_id}.jpg`,
+    type: "image/jpeg",
+  });
+
+  return api.post("/verify/request", formData);
+};
+
+export default api;
 
 {
   /* Dang ky/dang nhap */
@@ -290,41 +320,81 @@ export const getProfileImage = (title) => {
   return `${baseURL}/static/images/profile/${title}`;
 };
 
-export const getAvatarImage = (titleOrPath) => {
-  if (!titleOrPath) return null;
-  const filename = titleOrPath.split(/[/|\\]/).pop();
-  // ✅ Dùng `baseURL` động
-  return `${baseURL}/static/images/avatar/${filename}`;
-};
+// export const getAvatarImage = (titleOrPath) => {
+//   if (!titleOrPath) return null;
+//   const filename = titleOrPath.split(/[/|\\]/).pop();
+//   // ✅ Dùng `baseURL` động
+//   return `${baseURL}/static/images/avatar/${filename}`;
+// };
+export const getAvatarImage = (avatarData) => {
+  if (!avatarData) return null;
 
-export const deleteProfileImage = async (imageId) => {
-  try {
-    const response = await api.delete(`/images/profile/${imageId}`);
-    console.log("Xóa ảnh thành công:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Xóa ảnh thất bại", error.response?.data || error.message);
-    throw new Error("Delete profile image failed");
+  // Nếu là object từ API { id, title, ... }
+  if (typeof avatarData === "object" && avatarData.id) {
+    return `${baseURL}/images/account/${avatarData.id}`;
   }
+
+  // Nếu là số ID
+  if (typeof avatarData === "number") {
+    return `${baseURL}/images/account/${avatarData}`;
+  }
+
+  // Nếu là chuỗi tên file
+  if (typeof avatarData === "string") {
+    const filename = avatarData.split("\\").pop().split("/").pop();
+    return `${baseURL}/static/images/avatar/${filename}`;
+  }
+
+  // fallback
+  return null;
 };
 
-export const uploadAvatar = async (email, imageUri) => {
+
+// export const uploadAvatar = async (accountId, imageFile) => {
+//   const formData = new FormData();
+//   formData.append("file", imageFile);
+
+//   try {
+//     const response = await api.post(`/images/account/${accountId}`, formData, {
+//       headers: {
+//         "Content-Type": "multipart/form-data",
+//       },
+//     });
+
+//     console.log("Upload avatar thành công");
+//     return response.data;
+//   } catch (error) {
+//     console.error("Upload avatar failed", error.response?.data || error.message);
+//     throw new Error("Upload avatar failed");
+//   }
+// };
+// Thay thế hàm này trong file services/api.js
+
+export const uploadAvatar = async (accountId, imageFileUri) => {
   const formData = new FormData();
 
-  const filename = imageUri.split("/").pop();
-  const match = /\.(\w+)$/.exec(filename ?? "");
-  const type = match ? `image/${match[1]}` : `image/jpeg`;
+  // === PHẦN SỬA LỖI 422 ===
+  // 1. Lấy tên file và định dạng (ví dụ: .jpeg, .png)
+  const uriParts = imageFileUri.split("/");
+  const fileName = uriParts[uriParts.length - 1];
+  const fileType = fileName.split(".").pop();
 
-  formData.append("file", {
-    uri: imageUri,
-    name: filename || "avatar.jpg",
-    type,
-  });
+  // 2. Tạo một object "file-like" mà FormData có thể hiểu
+  const fileData = {
+    uri: imageFileUri,
+    name: fileName,
+    type: `image/${fileType}`, // Ví dụ: 'image/jpeg'
+  };
+
+  // 3. Append object file, KHÔNG PHẢI string 'imageFileUri'
+  formData.append("file", fileData);
+  // === KẾT THÚC PHẦN SỬA ===
 
   try {
-    const response = await api.post(`/images/account/${email}`, formData, {
+    const response = await api.post(`/images/account/${accountId}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
+        // 'Accept': 'application/json', // Bỏ comment nếu API của bạn yêu cầu
       },
     });
 
@@ -338,6 +408,69 @@ export const uploadAvatar = async (email, imageUri) => {
     throw new Error("Upload avatar failed");
   }
 };
+
+export const deleteAvatarImage = async (imageId) => {
+  try {
+    const response = await api.delete(`/images/account${imageId}`);
+
+    console.log(`Xóa ảnh avatar (ID: ${imageId}) thành công:`, response.data);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.detail
+      ? JSON.stringify(error.response.data.detail)
+      : error.message;
+
+    console.error(`Xóa ảnh avatar (ID: ${imageId}) thất bại:`, errorMessage);
+
+    throw new Error(
+      `Xóa ảnh avatar thất bại: ${
+        error.response?.data?.message || "Lỗi mạng hoặc server"
+      }`
+    );
+  }
+};
+
+export const deleteProfileImage = async (imageId) => {
+  try {
+    const response = await api.delete(`/images/profile/${imageId}`);
+    console.log("Xóa ảnh thành công:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Xóa ảnh thất bại", error.response?.data || error.message);
+    throw new Error("Delete profile image failed");
+  }
+};
+
+// export const uploadAvatar = async (email, imageUri) => {
+//   const formData = new FormData();
+
+//   const filename = imageUri.split("/").pop();
+//   const match = /\.(\w+)$/.exec(filename ?? "");
+//   const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+//   formData.append("file", {
+//     uri: imageUri,
+//     name: filename || "avatar.jpg",
+//     type,
+//   });
+
+//   try {
+//     const response = await api.post(`/images/account/${email}`, formData, {
+//       headers: {
+//         "Content-Type": "multipart/form-data",
+//       },
+//     });
+
+//     console.log("Upload avatar thành công");
+//     return response.data;
+//   } catch (error) {
+//     console.error(
+//       "Upload avatar failed",
+//       error.response?.data || error.message
+//     );
+//     throw new Error("Upload avatar failed");
+//   }
+// };
 
 // export const getAvatarImage = (titleOrPath) => {
 //   // Nếu là đường dẫn có "static/", cắt tên file ra
@@ -517,7 +650,10 @@ export const createChatSocket = (userId) => {
 
 
 
-
+export const getPackages = async () => {
+  const res = await api.get("/packages");
+  return res.data;
+};
 
 
 export const getDatingAdvice = async () => {

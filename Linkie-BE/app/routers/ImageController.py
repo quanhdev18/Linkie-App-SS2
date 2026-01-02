@@ -49,10 +49,15 @@ def get_profile_images_endpoint(image_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=e.status_code, detail=e.detail)
 
 
-@router.post("/account/{email}")
-def upload_avatar_account_endpoint(email: str, file: UploadFile, db: Session = Depends(get_db)):
-    image = ImageService.upload_account_avatar_image(file, db, email)
+# @router.post("/account/{email}")
+# def upload_avatar_account_endpoint(email: str, file: UploadFile, db: Session = Depends(get_db)):
+#     image = ImageService.upload_account_avatar_image(file, db, email)
+#     return {"image": image}
+@router.post("/account/{account_id}")
+def upload_avatar_account_endpoint(account_id: int, file: UploadFile, db: Session = Depends(get_db)):
+    image = ImageService.upload_account_avatar_image(file, db, account_id)
     return {"image": image}
+
 
 @router.get("/account/{image_id}")
 def get_account_avatar_endpoint(image_id: int, db: Session = Depends(get_db)):

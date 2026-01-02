@@ -27,7 +27,7 @@ class WhoLikedMeOut(BaseModel):
     gender: Optional[str] = None
     bio: Optional[str] = None
     hobbies: List[str] = []
-    avatar: Optional[str] = None
+    avatar_url: Optional[str] = None
     liked_at: datetime
     
     class Config:
@@ -63,7 +63,7 @@ class UserByHobbyOut(BaseModel):
     age: Optional[int] = None
     gender: Optional[str] = None
     hobbies: List[str] = []
-    avatar: Optional[str] = None
+    avatar_url: Optional[str] = None
     
     class Config:
         from_attributes = True

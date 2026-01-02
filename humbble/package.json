@@ -51,7 +51,9 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "expo-device": "~7.0.3"
+    "expo-device": "~7.0.3",
+    "expo-camera": "~16.0.18",
+    "expo-file-system": "~18.0.12"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

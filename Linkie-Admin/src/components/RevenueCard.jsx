@@ -281,7 +281,7 @@ const RevenueCard = () => {
   }, []);
 
   return (
-    <div className="w-full bg-white rounded-lg shadow p-4">
+    <div className="w-full h-full bg-white rounded-lg shadow p-4">
       <div className="flex justify-between border-gray-200 border-b pb-3">
         <dl>
           <dt className="text-base font-normal text-gray-500 pb-1">

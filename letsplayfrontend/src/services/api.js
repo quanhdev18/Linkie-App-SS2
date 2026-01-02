@@ -18,6 +18,52 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+
+export const createDailyStatus = async (content) => {
+  const res = await api.post("/daily-status", { content });
+  return res.data;
+};
+
+// Xoá status của tôi
+export const deleteDailyStatus = async () => {
+  const res = await api.delete("/daily-status");
+  return res.data;
+};
+
+// Lấy status của user
+export const getUserDailyStatus = async (userId) => {
+  const res = await api.get(`/daily-status/user/${userId}`);
+  return res.data;
+};
+
+// Explore
+export const getExploreDailyStatus = async (limit = 50) => {
+  const res = await api.get(`/daily-status/explore?limit=${limit}`);
+  return res.data;
+};
+
+
+export const getSameTargetUsers = async () => {
+  try {
+    const res = await api.get("/profiles/match-target");
+    const { profiles, can_view_photos } = res.data;
+    const formattedProfiles = profiles.map((user) => ({
+      ...user,
+      avatar_url: user.avatar?.url
+        ? `${baseURL}/${user.avatar.url}`.replace(/\\/g, "/")
+        : null,
+    }));
+
+    return {
+      profiles: formattedProfiles,
+      can_view_photos,
+    };
+  } catch (err) {
+    console.error("Error getSameTargetUsers:", err);
+    throw err;
+  }
+};
+
 {
   /* Dang ky/dang nhap */
 }
@@ -71,7 +117,6 @@ export const verifyEmail = async (data) => {
     const response = await api.post("/auth/verify-email", data);
     return response;
   } catch (error) {
-    // throw new Error(error.response?.data?.detail || "Network error");
     console.error(
       "❌ verifyEmail error:",
       error.response?.data || error.message
@@ -88,7 +133,7 @@ export const getLikedUsers = async (userId) => {
       },
     });
 
-    return response.data; // VD: [12, 15, 18]
+    return response.data; 
   } catch (error) {
     console.error("Lỗi khi lấy danh sách đã like:", error);
     throw new Error(
@@ -98,9 +143,16 @@ export const getLikedUsers = async (userId) => {
 };
 
 export const updateLocation = async (accountId, lat, lng) => {
-  await api.post(`/location/update_location/${accountId}`, null, {
-    params: { latitude: lat, longitude: lng },
-  });
+  try {
+    const res = await api.post(`/location/update_location/${accountId}`, {
+      latitude: lat,
+      longitude: lng,
+    });
+    return res.data;
+  } catch (err) {
+    console.log("❌ updateLocation error:", err);
+    throw err;
+  }
 };
 
 export const getNearbyUsers = async (accountId, radius) => {
@@ -110,8 +162,14 @@ export const getNearbyUsers = async (accountId, radius) => {
       radius,
     },
   });
-  return response.data; // Trả thẳng danh sách (không .nearby_users nữa nếu API trả List[])
+  return response.data.map((user) => ({
+    ...user,
+    avatar_url: user.avatar?.url
+      ? `${baseURL}/${user.avatar.url.replace(/\\/g, "/")}`
+      : null,
+  }));
 };
+
 
 export const getLocationName = async (lat, lng) => {
   try {
@@ -143,18 +201,6 @@ export const fetchMatches = async (accountId) => {
 {
   /* Profile */
 }
-// export const createProfile = async (data, token) => {
-//   try {
-//     const response = await api.post("/profiles/create", data, {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-//     return response;
-//   } catch (error) {
-//     throw new Error(error.response?.data?.message || "Network error");
-//   }
-// };
 export const createProfile = async (data, token) => {
   try {
     const response = await api.post("/profiles/create", data, {
@@ -212,56 +258,17 @@ export const likeUser = async (likedId, likerId) => {
   /* Upload anh */
 }
 
-// export const uploadProfileImage = async (profileId, imageUris) => {
-//   const formData = new FormData();
-
-//   for (let index = 0; index < imageUris.length; index++) {
-//     const uri = imageUris[index];
-//     const filename = uri.split("/").pop();
-//     const match = /\.(\w+)$/.exec(filename ?? "");
-//     const type = match ? `image/${match[1]}` : `image/jpeg`;
-
-//     const response = await fetch(uri);
-//     const blob = await response.blob();
-
-//     formData.append("files", {
-//       uri,
-//       name: filename || `profile${index}.jpg`,
-//       type,
-//     });
-//   }
-
-//   try {
-//     const response = await api.post(`/images/profile/${profileId}`, formData, {
-//       headers: {
-//         "Content-Type": "multipart/form-data",
-//       },
-//     });
-
-//     console.log("Upload profile ảnh thành công");
-//     return response.data;
-//   } catch (error) {
-//     console.error(
-//       "Upload profile image failed",
-//       error.response?.data || error.message
-//     );
-//     throw new Error("Upload profile image failed");
-//   }
-// };
-
 export const uploadProfileImage = async (profileId, images) => {
   const formData = new FormData();
 
   for (let index = 0; index < images.length; index++) {
     const item = images[index];
 
-    // ✅ Nếu là File object (web)
     if (item instanceof File) {
       formData.append("files", item);
       continue;
     }
 
-    // ✅ Nếu là URI string (mobile / base64)
     if (typeof item === "string") {
       const filename = item.split("/").pop();
       const match = /\.(\w+)$/.exec(filename ?? "");
@@ -294,13 +301,6 @@ export const uploadProfileImage = async (profileId, images) => {
   }
 };
 
-// export const getProfileImage = async (title) => {
-//   try {
-//     return `http://10.0.2.2:8000/static/images/profile/${title}`;
-//   } catch (error) {
-//     throw new Error("Cannot generate profile image URL");
-//   }
-// };
 export const getProfileImage = (title) => {
   if (!title) return null;
   return `${baseURL}/static/images/profile/${title}`;
@@ -317,21 +317,12 @@ export const deleteProfileImage = async (imageId) => {
   }
 };
 
-export const uploadAvatar = async (email, imageUri) => {
+export const uploadAvatar = async (accountId, imageFile) => {
   const formData = new FormData();
-
-  const filename = imageUri.split("/").pop();
-  const match = /\.(\w+)$/.exec(filename ?? "");
-  const type = match ? `image/${match[1]}` : `image/jpeg`;
-
-  formData.append("file", {
-    uri: imageUri,
-    name: filename || "avatar.jpg",
-    type,
-  });
+  formData.append("file", imageFile);
 
   try {
-    const response = await api.post(`/images/account/${email}`, formData, {
+    const response = await api.post(`/images/account/${accountId}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -340,23 +331,52 @@ export const uploadAvatar = async (email, imageUri) => {
     console.log("Upload avatar thành công");
     return response.data;
   } catch (error) {
-    console.error(
-      "Upload avatar failed",
-      error.response?.data || error.message
-    );
+    console.error("Upload avatar failed", error.response?.data || error.message);
     throw new Error("Upload avatar failed");
   }
 };
 
-// export const getAvatarImage = (title) => {
-//   return `http://10.0.2.2:8000/static/images/avatar/${title}`;
-// };
-export const getAvatarImage = (titleOrPath) => {
-  // Nếu là đường dẫn có "static/", cắt tên file ra
-  const filename = titleOrPath?.split("\\").pop(); // hoặc .split("/").pop() nếu dùng dấu /
+export const getAvatarImage = (avatarData) => {
+  if (!avatarData) return null;
 
-  return `http://10.0.2.2:8000/static/images/avatar/${filename}`;
+  if (typeof avatarData === "object" && avatarData.id) {
+    return `${baseURL}/images/account/${avatarData.id}`;
+  }
+
+  if (typeof avatarData === "number") {
+    return `${baseURL}/images/account/${avatarData}`;
+  }
+
+  if (typeof avatarData === "string") {
+    const filename = avatarData.split("\\").pop().split("/").pop();
+    return `${baseURL}/static/images/avatar/${filename}`;
+  }
+
+  return null;
 };
+
+
+export const deleteAvatarImage = async (imageId) => {
+  try {
+    const response = await api.delete(`/images/account${imageId}`);
+
+    console.log(`Xóa ảnh avatar (ID: ${imageId}) thành công:`, response.data);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.detail
+      ? JSON.stringify(error.response.data.detail)
+      : error.message;
+
+    console.error(`Xóa ảnh avatar (ID: ${imageId}) thất bại:`, errorMessage);
+
+    throw new Error(
+      `Xóa ảnh avatar thất bại: ${
+        error.response?.data?.message || "Lỗi mạng hoặc server"
+      }`
+    );
+  }
+};
+
 
 {
   /* Profile */
@@ -364,13 +384,11 @@ export const getAvatarImage = (titleOrPath) => {
 
 export const getProfileById = async (profileId) => {
   try {
-    // Lấy access_token từ AsyncStorage
     const token = await localStorage.getItem("access_token");
     if (!token) {
       throw new Error("Không có access_token");
     }
 
-    // Gọi API với header Authorization
     const response = await api.get(`/profiles/${profileId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -389,13 +407,11 @@ export const getProfileById = async (profileId) => {
 
 export const updateProfile = async (profile_id, data) => {
   try {
-    // Lấy access_token từ AsyncStorage
     const token = await localStorage.getItem("access_token");
     if (!token) {
       throw new Error("Không có access_token");
     }
 
-    // Gọi API với header Authorization
     const response = await api.put(`/profiles/update/${profile_id}`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -493,10 +509,8 @@ export const createChatSocket = () => {
     return null;
   }
 
-  // Tạo kết nối WebSocket có token trong query param
   const ws = new WebSocket(`${WS_BASE_URL}/ws/chat?token=${token}`);
 
-  // Log hỗ trợ debug
   ws.onopen = () => console.log("✅ WebSocket connected:", ws.url);
   ws.onerror = (err) => console.error("⚠️ WebSocket error:", err);
 
@@ -517,43 +531,67 @@ export const createNotificationSocket = (userId) => {
 
 export const getDatingAdvice = async () => {
   try {
-    // Dùng 'api.get' và gọi đến endpoint đã tạo ở backend
     const response = await api.get("/dating-advice/");
-    // Trả về thẳng data (nơi chứa 'videos' và 'tips')
+
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || "Không thể tải nội dung.");
   }
 };
 
-// 🆕 Lấy danh sách người đã thích mình
-// export const getUsersWhoLikedMe = async (userId) => {
-//   try {
-//     const response = await api.get(`/interactions/liked-me/${userId}`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Lỗi khi lấy danh sách người đã thích mình:", error);
-//     return [];
-//   }
-// };
+
 export const getUsersWhoLikedMe = async (userId) => {
   console.log("📡 Gọi API getUsersWhoLikedMe với userId:", userId);
+  if (!userId) return [];
+
   try {
     const response = await api.get(`/interactions/liked-me/${userId}`);
-    console.log("✅ Kết quả từ API liked-me:", response.data);
-    return response.data;
+    const data = response.data;
+
+    // Chuyển avatar_url thành URL đầy đủ
+    const formatted = data.map((user) => ({
+      ...user,
+      avatar_url: user.avatar?.url
+        ? `${baseURL}/${user.avatar.url.replaceAll("\\", "/")}`
+        : null,
+    }));
+
+    console.log("✅ Kết quả từ API liked-me (đã format avatar_url):", formatted);
+    return formatted;
   } catch (error) {
     console.error("❌ Lỗi khi lấy danh sách người đã thích mình:", error);
     return [];
   }
 };
 
-// export const getWhoLikedMe = async (user_id) => {
-//   try {
-//     const res = await axios.get(`/matching/who-liked-me/${user_id}`);
-//     return res.data;
-//   } catch (error) {
-//     console.error("Lỗi API getWhoLikedMe:", error.message);
-//     throw error;
-//   }
-// };
+
+
+export const getVerifyStatus = async (accountId) => {
+  try {
+    const res = await api.get(`/verify/${accountId}/verify-status`);
+    return res.data; // { account_id: 1, is_verified: true }
+  } catch (err) {
+    console.error("Error getVerifyStatus:", err);
+    throw err;
+  }
+};
+
+export const requestPose = async (accountId) => {
+  try {
+    const res = await api.post(`/verify/request-pose?account_id=${accountId}`);
+    return res.data; 
+    // trả về { pose_key, pose_sample_image }
+  } catch (err) {
+    console.error("Error requestPose:", err);
+    throw err;
+  }
+};
+
+export const requestVerification = (accountId, poseKey, file) => {
+  const formData = new FormData();
+  formData.append("account_id", accountId);
+  formData.append("pose_key", poseKey);
+  formData.append("file", file, "verification.jpg");
+
+  return api.post("/verify/request", formData);
+};

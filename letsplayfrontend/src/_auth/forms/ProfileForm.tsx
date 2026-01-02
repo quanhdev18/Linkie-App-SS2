@@ -591,6 +591,7 @@ import {
 } from "@/services/api";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import userAvatar from "../../../assets/image/image.png";
 
 const GENDER_OPTIONS = { male: "Nam", female: "Nữ" };
 const HOBBY_OPTIONS = {
@@ -767,8 +768,11 @@ const ProfileForm = () => {
           (k) => GENDER_OPTIONS[k] === gender
         ),
         target_type: purpose,
-        hobby: hobby.map((vi) =>
-          Object.keys(HOBBY_OPTIONS).find((k) => HOBBY_OPTIONS[k] === vi)
+        hobby: hobby.map((vi) => Object.keys(HOBBY_OPTIONS).find((k) => HOBBY_OPTIONS[k] === vi),
+          height,
+          zodiac_sign: zodiac,
+          job,
+          education,
         ),
       };
       await updateProfile(profileId, payload);
@@ -800,7 +804,7 @@ const ProfileForm = () => {
   return (
     <div className="flex flex-col items-center w-full h-screen bg-white overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-10 w-full h-16 flex items-center justify-center border-b bg-white">
+      <header className="sticky top-0 z-10 w-full h-20 flex items-center justify-center border-b bg-white">
         <div className="text-yellow-500 font-bold text-xl">Hồ sơ hẹn hò</div>
         <FontAwesomeIcon
           icon={faXmark}
@@ -856,9 +860,27 @@ const ProfileForm = () => {
             </button>
 
             <h2 className="text-lg font-semibold  mt-5">Xác thực</h2>
-            <button className="mt-4 w-full border rounded-full py-3 font-medium hover:bg-gray-50">
+            {/* <button className="mt-4 w-full border rounded-full py-3 font-medium hover:bg-gray-50">
+              Xác thực hồ sơ
+            </button> */}
+            <button
+              className="mt-4 w-full border rounded-full py-3 font-medium hover:bg-gray-50"
+              onClick={async () => {
+                const accountId = localStorage.getItem("account_id");
+                const res = await api.get(`/verify/request-pose?account_id=${accountId}`);
+
+                navigate("/verify-camera", {
+                  state: {
+                    poseKey: res.data.pose_key,
+                    poseImage: res.data.pose_sample_image,
+                    accountId,
+                  },
+                });
+              }}
+            >
               Xác thực hồ sơ
             </button>
+
           </div>
 
 
@@ -961,6 +983,66 @@ const ProfileForm = () => {
                     {opt}
                   </Button>
                 ))}
+
+              {(modalField === "height") && (
+                <input
+                  type="number"
+                  value={height || ""}
+                  onChange={(e) => setHeight(Number(e.target.value))}
+                  className="w-full border p-2 rounded"
+                  placeholder="Nhập chiều cao"
+                />
+              )}
+              {modalField === "job" && (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={job.position || ""}
+                    onChange={(e) => setJob({ ...job, position: e.target.value })}
+                    className="w-full border p-2 rounded"
+                    placeholder="Chức vụ"
+                  />
+                  <input
+                    type="text"
+                    value={job.company || ""}
+                    onChange={(e) => setJob({ ...job, company: e.target.value })}
+                    className="w-full border p-2 rounded"
+                    placeholder="Công ty"
+                  />
+                </div>
+              )}
+              {modalField === "education" && (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={education.school || ""}
+                    onChange={(e) => setEducation({ ...education, school: e.target.value })}
+                    className="w-full border p-2 rounded"
+                    placeholder="Trường học"
+                  />
+                  <input
+                    type="number"
+                    value={education.graduation_year || ""}
+                    onChange={(e) => setEducation({ ...education, graduation_year: Number(e.target.value) })}
+                    className="w-full border p-2 rounded"
+                    placeholder="Năm tốt nghiệp"
+                  />
+                </div>
+              )}
+              {modalField === "zodiac" && Object.entries(ZODIAC_OPTIONS).map(([key, label]) => (
+                <Button
+                  key={key}
+                  onClick={() => {
+                    handleSelectValue(key);
+                    setModalVisible(false);
+                  }}
+                  variant={zodiac === key ? "default" : "outline"}
+                  className="w-full py-3"
+                >
+                  {label}
+                </Button>
+              ))}
+
             </div>
 
             <Button

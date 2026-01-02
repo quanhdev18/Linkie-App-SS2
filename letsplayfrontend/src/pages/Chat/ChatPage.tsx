@@ -426,11 +426,12 @@ import {
   faXmark,
   faPaperPlane,
 } from "@fortawesome/free-solid-svg-icons";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
 import { getMessageHistory, createChatSocket } from "../../services/api";
 import defaultAvatar from "@/assets/image/image.png";
 import ProfileSidebar from "./ProfileSidebar"; // 🟢 import component ProfileSidebar
-
+import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 const ChatPage: React.FC = () => {
   const { chatId } = useParams();
   const [searchParams] = useSearchParams();
@@ -450,8 +451,80 @@ const ChatPage: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
 
-  // Ẩn menu khi click ra ngoài
+  const ZEGO_APP_ID = 1301516268;
+  const ZEGO_SERVER_SECRET = "2530e567b9e5eccc224e88114e75473f";
+  const [showCall, setShowCall] = useState(false);
+  const [callType, setCallType] = useState<"voice" | "video">("video");
+  const [incomingCall, setIncomingCall] = useState<any>(null);
+  const joinedRef = useRef(false);
+
+
+  const startCall = (type: "voice" | "video") => {
+    if (!socket || !userId || !toUserId || !chatId) return;
+
+    socket.send(
+      JSON.stringify({
+        type: "CALL_INVITE",
+        from_user_id: userId,
+        to_user_id: toUserId,
+        call_type: type,
+        room_id: `chat_${chatId}`,
+      })
+    );
+  };
+
+
+
+  const acceptCall = () => {
+    if (!socket || !incomingCall) return;
+
+    socket.send(
+      JSON.stringify({
+        type: "CALL_ACCEPT",
+        from_user_id: userId,
+        to_user_id: incomingCall.from_user_id,
+        room_id: incomingCall.room_id,
+        call_type: incomingCall.call_type,
+      })
+    );
+
+    joinZegoRoom(incomingCall.room_id, incomingCall.call_type);
+    setIncomingCall(null);
+  };
+
+  const joinZegoRoom = (roomId: string, type: "voice" | "video") => {
+    if (joinedRef.current) return; // ⛔ chặn join lặp
+    joinedRef.current = true;
+
+    setShowCall(true);
+
+    setTimeout(() => {
+      const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+        ZEGO_APP_ID,
+        ZEGO_SERVER_SECRET,
+        roomId,
+        userId!.toString(),
+        "User"
+      );
+
+      const zp = ZegoUIKitPrebuilt.create(kitToken);
+
+      zp.joinRoom({
+        container: document.getElementById("zego-call")!,
+        scenario: {
+          mode: ZegoUIKitPrebuilt.OneONoneCall,
+        },
+        showTurnOffCameraButton: type === "voice",
+        onLeaveRoom: () => {
+          joinedRef.current = false;   // ✅ reset
+          setShowCall(false);
+        },
+      });
+    }, 0);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -462,8 +535,6 @@ const ChatPage: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
-  // 🧠 Load lịch sử tin nhắn
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -481,37 +552,6 @@ const ChatPage: React.FC = () => {
     fetchHistory();
   }, [toUserId]);
 
-  // 🔌 Kết nối WebSocket
-  // useEffect(() => {
-  //   if (!userId) return;
-
-  //   const ws = createChatSocket(userId);
-  //   if (!ws) return;
-
-  //   ws.onopen = () => {
-  //     console.log("✅ WebSocket connected");
-  //     setSocket(ws);
-  //   };
-
-  //   ws.onmessage = (event) => {
-  //     try {
-  //       const msg = JSON.parse(event.data);
-  //       if (msg.from_user_id == toUserId) {
-  //         setMessages((prev) => [...prev, msg]);
-  //       }
-  //     } catch (error) {
-  //       console.error("❌ WebSocket error:", error);
-  //     }
-  //   };
-
-  //   ws.onerror = (err) => {
-  //     console.error("⚠️ WS error:", err);
-  //   };
-
-  //   return () => ws.close();
-  // }, [userId, toUserId]);
-
-  // 🔌 Kết nối WebSocket
   useEffect(() => {
     if (!userId) return;
 
@@ -530,13 +570,24 @@ const ChatPage: React.FC = () => {
     };
 
     ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.from_user_id == toUserId) {
-          setMessages((prev) => [...prev, msg]);
-        }
-      } catch (error) {
-        console.error("❌ WebSocket error:", error);
+      const msg = JSON.parse(event.data);
+
+      // 📞 cuộc gọi đến
+      if (msg.type === "CALL_INVITE" && msg.to_user_id === userId) {
+        console.log("📞 Incoming call", msg);
+        setIncomingCall(msg);
+        return;
+      }
+
+      // 📞 accept call
+      if (msg.type === "CALL_ACCEPT" && msg.to_user_id === userId) {
+        joinZegoRoom(msg.room_id, msg.call_type);
+        return;
+      }
+
+      // 💬 chat message
+      if (msg.content) {
+        setMessages((prev) => [...prev, msg]);
       }
     };
 
@@ -573,26 +624,40 @@ const ChatPage: React.FC = () => {
     });
   }, [messages]);
 
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setContent((prev) => prev + emojiData.emoji);
+  };
+
+
   return (
     <div className="flex h-screen ">
-      {/* ============================ */}
-      {/* 1️⃣ KHUNG CHAT CHÍNH */}
-      {/* ============================ */}
       <main className="flex-1 flex flex-col h-screen ">
         {/* Header */}
-        <header className="h-16 border-b flex items-center justify-between px-6 bg-white">
+        <header className="h-20 border-b flex items-center justify-between px-6 bg-white">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setShowProfile(true)}>
             <img
               src={toAvatarUrl || defaultAvatar}
               alt={toUsername}
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-12 h-12 rounded-full object-cover"
             />
             <div className="font-bold text-gray-800">{toUsername}</div>
           </div>
 
           <div className="flex items-center gap-5 text-gray-600">
-            <FontAwesomeIcon icon={faPhone} className="cursor-pointer hover:text-black" />
-            <FontAwesomeIcon icon={faVideo} className="cursor-pointer hover:text-black" />
+            {/* <FontAwesomeIcon icon={faPhone} className="cursor-pointer hover:text-black" />
+            <FontAwesomeIcon icon={faVideo} className="cursor-pointer hover:text-black" /> */}
+            <FontAwesomeIcon
+              icon={faPhone}
+              className="cursor-pointer hover:text-black"
+              onClick={() => startCall("voice")}
+            />
+
+            <FontAwesomeIcon
+              icon={faVideo}
+              className="cursor-pointer hover:text-black"
+              onClick={() => startCall("video")}
+            />
+
             <div className="relative" ref={menuRef}>
               <FontAwesomeIcon
                 icon={faEllipsisVertical}
@@ -660,32 +725,108 @@ const ChatPage: React.FC = () => {
           )}
         </div>
 
-        {/* Ô nhập tin nhắn */}
-        <footer className="p-3 bg-white border-gray-200">
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 shadow-sm">
+        <footer className="p-3 bg-white border-gray-200 relative">
+          {showEmoji && (
+            <div className="absolute bottom-16 left-3 z-50">
+              <EmojiPicker onEmojiClick={onEmojiClick} />
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 bg-gray-50 border rounded-full px-3 py-1.5">
+            <button
+              onClick={() => setShowEmoji((prev) => !prev)}
+              className="text-xl"
+            >
+              😊
+            </button>
+
             <input
-              type="text"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Start chatting..."
-              className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400 px-2"
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Nhập tin nhắn..."
+              className="flex-1 bg-transparent outline-none text-sm"
             />
-            <button
-              onClick={sendMessage}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 transition text-white shadow-sm"
-            >
-              <FontAwesomeIcon icon={faPaperPlane} size="sm" />
+
+            <button onClick={sendMessage}>
+              <FontAwesomeIcon icon={faPaperPlane} />
             </button>
           </div>
         </footer>
+
       </main>
+      {showCall && (
+        <div className="fixed inset-0 bg-black z-[9999]">
+          <div id="zego-call" className="w-full h-full" />
+        </div>
+      )}
+
 
       <ProfileSidebar
         visible={showProfile}
         onClose={() => setShowProfile(false)}
         userId={toUserId}
       />
+
+      {incomingCall && (
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-2xl w-80 p-6 text-center shadow-xl">
+
+            {/* Avatar */}
+            <div className="flex justify-center mb-4">
+              <img
+                src={toAvatarUrl || defaultAvatar}
+                alt="caller"
+                className="w-20 h-20 rounded-full object-cover border"
+              />
+            </div>
+
+            {/* Caller name */}
+            <p className="text-lg font-semibold text-gray-800">
+              Cuộc gọi đến từ
+            </p>
+            <p className="text-xl font-bold text-gray-900 mt-1">
+              {toUsername}
+            </p>
+
+            {/* Call type */}
+            <p className="text-sm text-gray-500 mt-1">
+              {incomingCall.call_type === "video"
+                ? "Cuộc gọi video"
+                : "Cuộc gọi thoại"}
+            </p>
+
+            {/* Action buttons */}
+            <div className="flex justify-between items-center mt-8 px-6">
+
+              {/* Reject */}
+              <button
+                onClick={() => setIncomingCall(null)}
+                className="w-14 h-14 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 transition"
+              >
+                <FontAwesomeIcon
+                  icon={faXmark}
+                  className="text-white text-xl"
+                />
+              </button>
+
+              {/* Accept */}
+              <button
+                onClick={acceptCall}
+                className="w-14 h-14 flex items-center justify-center rounded-full bg-green-500 hover:bg-green-600 transition"
+              >
+                <FontAwesomeIcon
+                  icon={
+                    incomingCall.call_type === "video" ? faVideo : faPhone
+                  }
+                  className="text-white text-xl"
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 };

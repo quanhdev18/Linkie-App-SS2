@@ -13,28 +13,29 @@ from uuid import uuid4
 
 class ImageService:
     @staticmethod
-    def upload_account_avatar_image(file: UploadFile, db: Session, email: str) -> AccountAvatar:
+    def upload_account_avatar_image(file: UploadFile, db: Session, account_id: int) -> AccountAvatar:
         if not file:
             raise HTTPException(status_code=400, detail="File must not be empty")
 
-    # Tạo thư mục static/avatar nếu chưa có
+        # Tạo thư mục static/avatar nếu chưa có
         STATIC_AVATAR_DIR = os.path.join("static", "images", "avatar")
         os.makedirs(STATIC_AVATAR_DIR, exist_ok=True)
 
-    # Tạo tên file duy nhất
+        # Tạo tên file duy nhất
         ext = file.filename.split(".")[-1]
         filename = f"{uuid4()}.{ext}"
         save_path = os.path.join(STATIC_AVATAR_DIR, filename)
 
-    # Ghi file ra ổ đĩa
+        # Ghi file ra ổ đĩa
         with open(save_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-    # Kiểm tra account
-        account = db.query(Account).filter(Account.email == email).first()
+        # Kiểm tra account
+        account = db.query(Account).filter(Account.id == account_id).first()
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
 
+        # Tạo entity AccountAvatar
         image_data = AccountAvatar(
             title=filename,
             url=os.path.join("static", "images", "avatar", filename),
@@ -46,13 +47,13 @@ class ImageService:
         db.add(image_data)
         db.commit()
         db.refresh(image_data)
-        
-        if account.profile:
-           account.profile.avatar_id = image_data.id
-           db.commit()
-           
-        return image_data
 
+        # Gán avatar vào profile nếu profile tồn tại
+        if account.profile:
+            account.profile.avatar_id = image_data.id
+            db.commit()
+
+        return image_data
 
     @staticmethod
     def get_account_avatar_by_id(id: int, db: Session) -> FileResponse:

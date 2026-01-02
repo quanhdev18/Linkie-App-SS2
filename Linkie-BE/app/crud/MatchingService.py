@@ -4,7 +4,7 @@ from app.models.ProfileModel import Profile
 from app.models.InteractionModel import Like, Match
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta, date
-
+from sqlalchemy.orm import joinedload
 
 class MatchingService:
     @staticmethod
@@ -266,53 +266,83 @@ class MatchingService:
     @staticmethod
     def get_who_liked_me(db: Session, user_id: int) -> List[Dict]:
         """
-        Lấy danh sách những người đã like mình (nhưng mình chưa like lại)
-        Đây là tính năng premium trong các app hẹn hò
+        Lấy danh sách những người đã like bạn nhưng bạn chưa like họ lại,
+        kèm đầy đủ thông tin avatar, tuổi, giới tính, sở thích...
         """
+        # --- Lấy tất cả like mà người khác like mình ---
         likers = db.query(Like).filter(Like.liked_id == user_id).all()
-        
+
+        # --- Lấy danh sách mình đã like để loại bỏ ---
         my_likes = db.query(Like).filter(Like.liker_id == user_id).all()
         my_liked_ids = {like.liked_id for like in my_likes}
-        
+
+        # --- Lấy danh sách đã match ---
         matches = db.query(Match).filter(
             (Match.user1_id == user_id) | (Match.user2_id == user_id)
         ).all()
-        matched_ids = set()
-        for match in matches:
-            matched_ids.add(
-                match.user2_id if match.user1_id == user_id else match.user1_id
-            )
-        
+        matched_ids = {
+            match.user2_id if match.user1_id == user_id else match.user1_id
+            for match in matches
+        }
+
         result = []
         for like in likers:
+            # Chỉ lấy người đã like mình mà mình CHƯA like lại & chưa match
             if like.liker_id not in my_liked_ids and like.liker_id not in matched_ids:
-                user = db.query(Account).filter(Account.id == like.liker_id).first()
-                if user and user.profile:
-                    age = None
-                    if user.profile.date_of_birth:
-                        age = MatchingService.calculate_age(user.profile.date_of_birth)
-                    
-                    avatar_url = None
-                    if user.profile.avatar:
-                        avatar_url = user.profile.avatar.url if hasattr(user.profile.avatar, 'url') else None
-                    
-                    hobbies = []
-                    if user.profile.hobby:
-                        hobbies = [str(h.value) if hasattr(h, 'value') else str(h) 
-                                  for h in user.profile.hobby]
-                    
-                    result.append({
-                        'account_id': user.id,
-                        'username': user.profile.username,
-                        'age': age,
-                        'gender': str(user.profile.gender.value) if user.profile.gender else None,
-                        'bio': user.profile.bio,
-                        'hobbies': hobbies,
-                        'avatar': avatar_url,
-                        'liked_at': like.timestamp
-                    })
-        
+                user = (
+                    db.query(Account)
+                    .options(
+                        # Load cả profile và avatar nếu có
+                        joinedload(Account.profile),
+                        joinedload(Account.avatar)
+                    )
+                    .filter(Account.id == like.liker_id)
+                    .first()
+                )
+
+                if not user or not user.profile:
+                    continue
+
+                # --- Tính tuổi ---
+                age = None
+                if user.profile.date_of_birth:
+                    age = MatchingService.calculate_age(user.profile.date_of_birth)
+
+                # --- Lấy avatar URL ---
+                avatar_url = None
+                if user.avatar and hasattr(user.avatar, "url"):
+                    avatar_url = user.avatar.url
+                elif user.profile.avatar:
+                    # fallback nếu avatar lưu trong Profile
+                    avatar_url = (
+                        user.profile.avatar.url
+                        if hasattr(user.profile.avatar, "url")
+                        else None
+                    )
+
+                # --- Sở thích ---
+                hobbies = []
+                if user.profile.hobby:
+                    hobbies = [
+                        str(h.value) if hasattr(h, "value") else str(h)
+                        for h in user.profile.hobby
+                    ]
+
+                result.append({
+                    "account_id": user.id,
+                    "username": user.profile.username,
+                    "age": age,
+                    "gender": str(user.profile.gender.value)
+                    if user.profile.gender
+                    else None,
+                    "bio": user.profile.bio,
+                    "hobbies": hobbies,
+                    "avatar_url": avatar_url,
+                    "liked_at": like.timestamp,
+                })
+
         return result
+
     
     @staticmethod
     def get_mutual_likes(db: Session, user_id: int) -> List[Dict]:

@@ -29,12 +29,20 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply }) 
       distance,
       minAge,
       maxAge,
-      gender: selectedGender,
+      // gender: selectedGender,
+      gender: selectedGender.length > 0 ? selectedGender : null,
       orientation: selectedOrientation,
       relationship: selectedRelationship,
     });
     onClose();
   };
+
+  const genderMap = {
+    "Nam": "male",
+    "Nữ": "female",
+    "Khác": "other",
+  };
+
 
   return (
     <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
@@ -91,12 +99,11 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply }) 
             {["Nam", "Nữ", "Khác"].map((g) => (
               <button
                 key={g}
-                onClick={() => toggleSelection(g, selectedGender, setSelectedGender)}
-                className={`px-3 py-1 rounded-full border text-sm ${
-                  selectedGender.includes(g)
+                onClick={() => toggleSelection(genderMap[g], selectedGender, setSelectedGender)}
+                className={`px-3 py-1 rounded-full border text-sm ${selectedGender.includes(genderMap[g])
                     ? "bg-black text-white"
                     : "bg-gray-100 text-gray-700"
-                }`}
+                  }`}
               >
                 {g}
               </button>
@@ -112,11 +119,10 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply }) 
               <button
                 key={o}
                 onClick={() => toggleSelection(o, selectedOrientation, setSelectedOrientation)}
-                className={`px-3 py-1 rounded-full border text-sm ${
-                  selectedOrientation.includes(o)
+                className={`px-3 py-1 rounded-full border text-sm ${selectedOrientation.includes(o)
                     ? "bg-black text-white"
                     : "bg-gray-100 text-gray-700"
-                }`}
+                  }`}
               >
                 {o}
               </button>
@@ -138,11 +144,10 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply }) 
               <button
                 key={r}
                 onClick={() => toggleSelection(r, selectedRelationship, setSelectedRelationship)}
-                className={`px-3 py-1 rounded-full border text-sm ${
-                  selectedRelationship.includes(r)
+                className={`px-3 py-1 rounded-full border text-sm ${selectedRelationship.includes(r)
                     ? "bg-black text-white"
                     : "bg-gray-100 text-gray-700"
-                }`}
+                  }`}
               >
                 {r}
               </button>

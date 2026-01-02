@@ -14,6 +14,13 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    
+    # AZURE_FACE_ENDPOINT: str
+    # AZURE_FACE_KEY: str
+    
+    # cloudinary_cloud_name: str
+    # cloudinary_api_key: str
+    # cloudinary_api_secret: str
 
     # Email settings
     MAIL_USERNAME: EmailStr
@@ -22,6 +29,11 @@ class Settings(BaseSettings):
     MAIL_PORT: int
     MAIL_SERVER: str
     MAIL_FROM_NAME: Optional[str] = "Linkie"
+    
+    
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str
     
     stripe_secret_key: str = "sk_test_yourkey"
 

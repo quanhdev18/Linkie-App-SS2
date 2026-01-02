@@ -152,13 +152,14 @@ export default function Discover() {
           <UserCard
             showLikeIcon={true}
             size="large"
+            isPremiumBlur={true}
             data={{
               id: item.account_id,
               name: item.username,
               age: item.age,
               gender: item.gender,
               bio: item.bio,
-              image: item.avatar, 
+              image: item.avatar_url || item.image, 
               hobbies: item.hobbies,
             }}
           />

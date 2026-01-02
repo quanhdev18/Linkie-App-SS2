@@ -52,6 +52,65 @@
 
 
 
+// import "./index.css";
+// import { Route, Routes } from "react-router-dom";
+// import { Toaster } from "@/components/ui/toaster";
+
+// import AuthLayout from "@/_auth/AuthLayout";
+// import SignInForm from "@/_auth/forms/SignInForm";
+// import SignUpForm from "@/_auth/forms/SignUpForm";
+
+// import RootLayout from "@/_root/RootLayout";
+// import HomeLayout from "@/layouts/HomeLayout"; // ✅ Thêm dòng này
+// import Home from "@/pages/Home/HomePage";
+// import ChatPage from "@/pages/Chat/ChatPage";
+// import Upgrade from "@/pages/Buy/Upgrade";
+// import SpotlightPayment from "@/pages/Home/components/SpotlightPayment";
+// import PaymentSuccess from "@/pages/Home/components/PaymentSuccess";
+// import SettingsPage from "@/pages/EditProfile/SettingsPage";
+// import ProfileForm from "@/pages/EditProfile/ProfileForm";
+// import PreviewProfile from "@/pages/EditProfile/PreviewProfile";
+// import FillProfile from "@/_auth/forms/FillProfileForm";
+// import UploadPhoto from "@/_auth/forms/UploadPhoto";
+// import ContactAndFAQs from "@/pages/EditProfile/ContactAndFAQs";
+
+// export default function App() {
+//   return (
+//     <main>
+//       <Routes>
+//         {/* RootLayout bao bọc toàn bộ phần user login */}
+//         <Route element={<RootLayout />}>
+//           {/* HomeLayout chứa Sidebar cố định */}
+//           <Route element={<HomeLayout />}>
+//             <Route path="/home" element={<Home />} />
+//             <Route path="/profile" element={<ProfileForm />} />
+//             <Route path="/chat/:chatId" element={<ChatPage />} />
+//             <Route path="/profile/preview" element={<PreviewProfile />} />
+//             <Route path="/upgrade" element={<Upgrade />} />
+//             <Route path="/settings" element={<SettingsPage />} /> {/* ✅ Sidebar vẫn giữ nguyên */}
+//             <Route path="/contact" element={<ContactAndFAQs />} />
+//           </Route>
+
+//           {/* Những route không cần Sidebar */}
+//           <Route path="/spotlight-payment" element={<SpotlightPayment />} />
+//           <Route path="/payment-success" element={<PaymentSuccess />} />
+//         </Route>
+
+//         {/* Auth routes */}
+//         <Route element={<AuthLayout />}>
+//           <Route path="/sign-up" element={<SignUpForm />} />
+//           <Route path="/fill-profile" element={<FillProfile />} />
+//           <Route path="/upload" element={<UploadPhoto />} />
+//           <Route path="/" element={<SignInForm />} />
+//         </Route>
+//       </Routes>
+//       <Toaster />
+//     </main>
+//   );
+// }
+
+
+// App.tsx
 import "./index.css";
 import { Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -61,7 +120,7 @@ import SignInForm from "@/_auth/forms/SignInForm";
 import SignUpForm from "@/_auth/forms/SignUpForm";
 
 import RootLayout from "@/_root/RootLayout";
-import HomeLayout from "@/layouts/HomeLayout"; // ✅ Thêm dòng này
+import HomeLayout from "@/layouts/HomeLayout";
 import Home from "@/pages/Home/HomePage";
 import ChatPage from "@/pages/Chat/ChatPage";
 import Upgrade from "@/pages/Buy/Upgrade";
@@ -72,36 +131,48 @@ import ProfileForm from "@/pages/EditProfile/ProfileForm";
 import PreviewProfile from "@/pages/EditProfile/PreviewProfile";
 import FillProfile from "@/_auth/forms/FillProfileForm";
 import UploadPhoto from "@/_auth/forms/UploadPhoto";
+import ContactAndFAQs from "@/pages/EditProfile/ContactAndFAQs";
+import AdvicePage from "@/pages/EditProfile/AdvicePage";
+import VerifyCamera from "@/pages/Verify/VerifyCamera";
+
+// ✅ Import UserProvider
+import { UserProvider } from "@/context/UserContext"; 
 
 export default function App() {
   return (
     <main>
-      <Routes>
-        {/* RootLayout bao bọc toàn bộ phần user login */}
-        <Route element={<RootLayout />}>
-          {/* HomeLayout chứa Sidebar cố định */}
-          <Route element={<HomeLayout />}>
-            <Route path="/home" element={<Home />} />
-            <Route path="/profile" element={<ProfileForm />} />
-            <Route path="/chat/:chatId" element={<ChatPage />} />
-            <Route path="/profile/preview" element={<PreviewProfile />} />
-            <Route path="/upgrade" element={<Upgrade />} />
-            <Route path="/settings" element={<SettingsPage />} /> {/* ✅ Sidebar vẫn giữ nguyên */}
+      <UserProvider> {/* 👈 Bọc toàn bộ Routes trong UserProvider */}
+        <Routes>
+          {/* RootLayout bao bọc toàn bộ phần user login */}
+          <Route element={<RootLayout />}>
+            {/* HomeLayout chứa Sidebar cố định */}
+            <Route element={<HomeLayout />}>
+              <Route path="/home" element={<Home />} />
+              <Route path="/profile" element={<ProfileForm />} />
+              <Route path="/chat/:chatId" element={<ChatPage />} />
+              <Route path="/profile/preview" element={<PreviewProfile />} />
+              <Route path="/upgrade" element={<Upgrade />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/contact" element={<ContactAndFAQs />} />
+              <Route path="/advice" element={<AdvicePage />} />
+              <Route path="/verify-camera" element={<VerifyCamera />} />
+
+            </Route>
+
+            {/* Những route không cần Sidebar */}
+            <Route path="/spotlight-payment" element={<SpotlightPayment />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
           </Route>
 
-          {/* Những route không cần Sidebar */}
-          <Route path="/spotlight-payment" element={<SpotlightPayment />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-        </Route>
-
-        {/* Auth routes */}
-        <Route element={<AuthLayout />}>
-          <Route path="/sign-up" element={<SignUpForm />} />
-          <Route path="/fill-profile" element={<FillProfile />} />
-          <Route path="/upload" element={<UploadPhoto />} />
-          <Route path="/" element={<SignInForm />} />
-        </Route>
-      </Routes>
+          {/* Auth routes */}
+          <Route element={<AuthLayout />}>
+            <Route path="/sign-up" element={<SignUpForm />} />
+            <Route path="/fill-profile" element={<FillProfile />} />
+            <Route path="/upload" element={<UploadPhoto />} />
+            <Route path="/" element={<SignInForm />} />
+          </Route>
+        </Routes>
+      </UserProvider> {/* 👈 Kết thúc UserProvider */}
       <Toaster />
     </main>
   );

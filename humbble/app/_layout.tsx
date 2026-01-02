@@ -147,6 +147,7 @@ function LayoutContent() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(fill)" />
         <Stack.Screen name="(tabs)" />
+        {/* <Stack.Screen name="(verify)" /> */}
       </Stack>
       <StatusBar style="auto" />
       <Toast />

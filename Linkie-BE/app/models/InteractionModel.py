@@ -1,8 +1,8 @@
 from datetime import datetime
-
 from sqlalchemy import Column, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-
+from typing import List, Optional
+from pydantic import BaseModel
 from app.core.base import Base
 
 
@@ -25,3 +25,5 @@ class Match(Base):
 
     user1 = relationship("Account", foreign_keys=[user1_id])
     user2 = relationship("Account", foreign_keys=[user2_id])
+
+

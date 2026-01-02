@@ -118,7 +118,7 @@ import React, { useState } from "react";
 import PeopleCard from "@/components/PeopleCard";
 import { Octicons } from "@expo/vector-icons";
 import Header from "@/components/Header";
-import FilterModal from "../Screen/_filter";
+import FilterModal from "../screens/_filter";
 import { Colors } from "@/constants/Colors";
 
 const People = () => {
@@ -149,7 +149,7 @@ const People = () => {
       <View style={{ paddingHorizontal: 18 }}>
         <Header headerTitle={"Humble"} button={button} />
       </View>
-      
+
       {/* PeopleCard sẽ chiếm toàn bộ không gian còn lại và tự căn giữa */}
       <PeopleCard filterData={filterData} />
 
@@ -169,7 +169,6 @@ export default People;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // Dùng flex: 1 để chiếm toàn bộ màn hình
-    // Xóa paddingHorizontal, width, height khỏi đây
+    flex: 1, 
   },
 });

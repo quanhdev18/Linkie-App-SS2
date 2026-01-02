@@ -123,21 +123,21 @@ const Analytics = () => {
   }, []);
 
   return (
-    <div className="w-full p-2">
+    <div className="w-full p-4">
       <Statistics data={dataSta} />
-      <div className="w-full mt-5 flex">
-        <div className="w-1/2 h-full px-3">
-          <div className="w-full shadow-xl border border-gray-200 bg-white rounded-[10px]">
+      <div className="w-full mt-5 flex ">
+        <div className="w-1/3 h-full pr-4">
+          <div className="w-full p-2 shadow-xl border border-gray-200 bg-white rounded-[10px]">
             <h1 className="text-center text-xl my-3 font-bold">
               Tỷ lệ chuyển đổi
             </h1>
             <ChartPie />
           </div>
         </div>
-        <div className="w-1/2 bg-white rounded-[10px] p-2 shadow-xl">
+        <div className="w-2/3 bg-white rounded-[10px] p-2 shadow-xl">
           <h1 className="text-center text-xl my-3 font-bold">Loại giao dịch</h1>
           <div className="flex justify-between mb-5">
-            <div className="grid gap-4 grid-cols-2">
+            {/* <div className="grid gap-4 grid-cols-2">
               <div>
                 <h5 className="text-gray-500 font-normal mb-2">Revenue</h5>
                 <p className="text-gray-900 text-2xl font-bold">42,3k</p>
@@ -148,13 +148,13 @@ const Analytics = () => {
                 </h5>
                 <p className="text-gray-900 text-2xl font-bold">$5.40</p>
               </div>
-            </div>
+            </div> */}
           </div>
           <StatsCard />
         </div>
       </div>
 
-      <div className="w-[98%] mt-5 rounded-xl p-3 shadow-xl mx-auto bg-white">
+      <div className="w-full mt-5 rounded-xl p-3 shadow-xl mx-auto bg-white">
         <Table
           columns={columns}
           dataSource={reportData}

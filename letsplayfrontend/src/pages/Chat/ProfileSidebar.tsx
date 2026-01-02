@@ -168,7 +168,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ visible, onClose, userI
 
             <div className="bg-yellow-50 rounded-xl p-4">
               <h4 className="font-semibold text-gray-800 mb-2">
-                About {profile?.username}
+                Về {profile?.username}
               </h4>
               <p className="text-gray-700 text-sm">
                 {profile?.bio || "Chưa có mô tả bản thân"}

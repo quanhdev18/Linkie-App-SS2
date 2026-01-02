@@ -128,7 +128,7 @@ const Login = () => {
       localStorage.setItem("role", role);
 
       setMessage("🎉 Đăng nhập thành công!");
-      navigate("/");
+      navigate("/admin");
     } catch (err) {
       console.error(err);
       setMessage("❌ OTP sai hoặc đăng nhập thất bại.");
@@ -166,7 +166,7 @@ const Login = () => {
                   disabled={loading}
                   className="bg-blue-600 text-white px-2 py-1.5 rounded-md text-xs font-medium hover:bg-blue-700 transition"
                 >
-                  {loading ? "Đang gửi..." : "Gửi OTP"}
+                  {loading ? "Đang gửi..." : "Gửi"}
                 </button>
               )}
             </div>

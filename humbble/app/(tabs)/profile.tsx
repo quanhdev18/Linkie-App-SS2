@@ -15,7 +15,7 @@ import Avatar from "@/components/Avatar";
 import Button from "@/components/Button";
 import DatingAdvice from "@/components/profile/DatingAdvice";
 import { useRouter } from "expo-router";
-import SettingsModal from "../Screen/settingScreen";
+import SettingsModal from "../screens/settingScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getProfileById, getAvatarImage, getPackages } from "../../services/api";
 import defaultAvatar from "../../assets/images/image.png";
@@ -222,43 +222,6 @@ const Profile = () => {
                 )}
               </ScrollView>
             </View>
-
-            {/* Table */}
-            {/* <View style={styles.table}>
-              <View style={styles.tableItem}>
-                <Text style={[styles.row1, { fontWeight: "bold" }]}>
-                  What you get:
-                </Text>
-                <View style={styles.headerCol}>
-                  <Text style={styles.headerText}>Premium+</Text>
-                </View>
-                <View style={styles.headerCol}>
-                  <Text style={styles.headerText}>Premium</Text>
-                </View>
-              </View>
-
-              {PLANS.map((planitem) => (
-                <View style={styles.tableItem} key={planitem.plan}>
-                  <Text style={[styles.row1, { fontWeight: "300" }]}>
-                    {planitem.plan}
-                  </Text>
-                  <View style={styles.row2}>
-                    <Ionicons
-                      name="checkmark-outline"
-                      size={24}
-                      color={planitem.p1 ? "black" : "#bdb9b9"}
-                    />
-                  </View>
-                  <View style={styles.row3}>
-                    <Ionicons
-                      name="checkmark-outline"
-                      size={24}
-                      color={planitem.p2 ? "black" : "#bdb9b9"}
-                    />
-                  </View>
-                </View>
-              ))}
-            </View> */}
 
             {/* Table - Cột trái cố định + phần phải cuộn ngang */}
             <View style={styles.tableContainer}>
@@ -479,60 +442,60 @@ const styles = StyleSheet.create({
   //   fontSize: 14,
   // },
   tableContainer: {
-  flexDirection: "row",
-  marginTop: 15,
-  // ❌ bỏ borderTopWidth và borderColor
-},
+    flexDirection: "row",
+    marginTop: 15,
+    // ❌ bỏ borderTopWidth và borderColor
+  },
 
-leftColumn: {
-  width: "45%", // cột trái cố định
-  // ❌ bỏ borderRightWidth và borderColor
-  paddingRight: 8,
-},
+  leftColumn: {
+    width: "45%", // cột trái cố định
+    // ❌ bỏ borderRightWidth và borderColor
+    paddingRight: 8,
+  },
 
-leftHeader: {
-  paddingVertical: 8,
-  // ❌ bỏ borderBottomWidth và borderColor
-  marginBottom: 6,
-},
+  leftHeader: {
+    paddingVertical: 8,
+    // ❌ bỏ borderBottomWidth và borderColor
+    marginBottom: 6,
+  },
 
-leftRow: {
-  paddingVertical: 6,
-  // ❌ bỏ borderBottomWidth và borderColor
-  marginBottom: 8,
-},
+  leftRow: {
+    paddingVertical: 6,
+    // ❌ bỏ borderBottomWidth và borderColor
+    marginBottom: 8,
+  },
 
-leftText: {
-  fontSize: 13,
-  color: "#1c1c1c",
-},
+  leftText: {
+    fontSize: 13,
+    color: "#1c1c1c",
+  },
 
-rightColumn: {
-  width: 120,
-  // ❌ bỏ borderRightWidth và borderColor
-  alignItems: "center",
-  marginRight: 10,
-},
+  rightColumn: {
+    width: 120,
+    // ❌ bỏ borderRightWidth và borderColor
+    alignItems: "center",
+    marginRight: 10,
+  },
 
-rightHeader: {
-  paddingVertical: 8,
-  // ❌ bỏ borderBottomWidth và borderColor
-  alignItems: "center",
-  marginBottom: 6,
-},
+  rightHeader: {
+    paddingVertical: 8,
+    // ❌ bỏ borderBottomWidth và borderColor
+    alignItems: "center",
+    marginBottom: 6,
+  },
 
-rightRow: {
-  paddingVertical: 6,
-  // ❌ bỏ borderBottomWidth và borderColor
-  alignItems: "center",
-  justifyContent: "center",
-  marginBottom: 8,
-},
+  rightRow: {
+    paddingVertical: 6,
+    // ❌ bỏ borderBottomWidth và borderColor
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
 
-headerText: {
-  fontWeight: "bold",
-  fontSize: 14,
-},
+  headerText: {
+    fontWeight: "bold",
+    fontSize: 14,
+  },
 
 
   editButton: {

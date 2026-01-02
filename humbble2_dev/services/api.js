@@ -1,0 +1,659 @@
+// import axios from "axios";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// // const baseURL = "http://10.0.2.2:8000";
+// // const baseURL = "http://192.168.0.107:8000";
+
+// import * as Device from "expo-device"; // 👈 1. Import thư viện
+
+// // 2. Định nghĩa các địa chỉ IP
+// const REAL_DEVICE_IP = "192.168.0.107"; // ⚠️ Nhớ thay bằng IP của bạn
+// const EMULATOR_BASE_URL = `http://10.0.2.2:8000`;
+// const REAL_DEVICE_BASE_URL = `http://${REAL_DEVICE_IP}:8000`;
+// const WS_BASE_URL = `ws://${REAL_DEVICE_IP}:8000`;
+
+// // 3. Tự động chọn baseURL dựa trên loại thiết bị
+// // Device.isDevice sẽ là 'true' nếu là máy thật, 'false' nếu là máy ảo.
+// const baseURL = Device.isDevice ? REAL_DEVICE_BASE_URL : EMULATOR_BASE_URL;
+
+// console.log(`Connecting to API at: ${baseURL}`); // Dòng này giúp bạn kiểm tra
+
+// const api = axios.create({
+//   baseURL: baseURL,
+// });
+
+
+
+import axios from "axios";
+// import AsyncStorage from "@react--native-async-storage/async-storage";
+import * as Device from "expo-device";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// =================================================================
+
+// TỰ ĐỘNG CHỌN ĐỊA CHỈ IP DỰA TRÊN THIẾT BỊ
+
+// =================================================================
+const REAL_DEVICE_IP = "192.168.0.107";
+const API_IP = Device.isDevice ? REAL_DEVICE_IP : "10.0.2.2";
+const WS_IP = Device.isDevice ? REAL_DEVICE_IP : "10.0.2.2";
+const baseURL = `http://${API_IP}:8000`;
+const WS_BASE_URL = `ws://${WS_IP}:8000`;
+
+console.log(`✅ [API Service] Connecting to API at: ${baseURL}`);
+
+const api = axios.create({
+  baseURL: baseURL,
+});
+
+api.interceptors.request.use(
+  async (config) => {
+    // Lấy token từ AsyncStorage.
+    // Tôi thấy code của bạn dùng key "access_token"
+    const token = await AsyncStorage.getItem("access_token"); 
+    
+    if (token) {
+      // Gắn token vào header Authorization
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+{
+  /* Dang ky/dang nhap */
+}
+export const login = async (data) => {
+  try {
+    const response = await api.post("/auth/login", data);
+    return response;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Network error");
+  }
+};
+
+export const verifyOtp = async (data) => {
+  try {
+    const response = await api.post("/auth/verify-otp", data);
+    return response;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Network error");
+  }
+};
+
+export const sendOtp = async (data) => {
+  try {
+    const response = await api.post("/auth/send-otp", data);
+    return response;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Network error");
+  }
+};
+
+export const register = async (data) => {
+  try {
+    const response = await api.post("/auth/register", data);
+    return response;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Network error");
+  }
+};
+
+export const refreshToken = async (data) => {
+  try {
+    const response = await api.post("/auth/refresh", data);
+    return response;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Network error");
+  }
+};
+
+export const verifyEmail = async (data) => {
+  try {
+    const response = await api.post("/auth/verify-email", data);
+    return response;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || "Network error");
+  }
+};
+
+export const getLikedUsers = async (userId) => {
+  try {
+    const response = await api.get("/interactions/interactions", {
+      params: {
+        user_id: userId,
+      },
+    });
+
+    return response.data; // VD: [12, 15, 18]
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách đã like:", error);
+    throw new Error(
+      error.response?.data?.detail || "Lỗi khi lấy danh sách đã like"
+    );
+  }
+};
+
+export const updateLocation = async (accountId, lat, lng) => {
+  await api.post(`/location/update_location/${accountId}`, null, {
+    params: { latitude: lat, longitude: lng },
+  });
+};
+
+// export const getNearbyUsers = async (accountId, radius) => {
+//   const response = await api.get("/location/nearby_users_by_account", {
+//     params: {
+//       account_id: accountId,
+//       radius,
+//     },
+//   });
+//   return response.data; // Trả thẳng danh sách (không .nearby_users nữa nếu API trả List[])
+// };
+
+export const getLocationName = async (lat, lng) => {
+  try {
+    const response = await api.get("/location/get_location_name", {
+      params: { latitude: lat, longitude: lng },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy tên địa điểm:", error);
+    return "Không rõ địa điểm";
+  }
+};
+
+export const getLocationByAccountId = async (accountId) => {
+  try {
+    const response = await api.get(`/location/by_account_id/${accountId}`);
+    return response.data; // { latitude: ..., longitude: ..., last_updated: ... }
+  } catch (error) {
+    console.error("Lỗi khi lấy vị trí từ account ID:", error);
+    return null;
+  }
+};
+
+export const fetchMatches = async (accountId) => {
+  const response = await api.get(`/interactions/matches/${accountId}`);
+  return response.data;
+};
+
+{
+  /* Profile */
+}
+export const createProfile = async (data, token) => {
+  try {
+    const response = await api.post("/profiles/create", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Network error");
+  }
+};
+
+export const getProfiles = async (token) => {
+  try {
+    const response = await api.get("/profiles/", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const dataWithFullImageUrl = response.data.map((profile) => ({
+      ...profile,
+      images:
+        profile.images?.map((img) => ({
+          ...img,
+          url: `${baseURL}/${img.url}`,
+        })) || [],
+    }));
+
+    return dataWithFullImageUrl;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách profile:", error);
+    throw new Error(error.response?.data?.detail || "Lỗi kết nối");
+  }
+};
+
+{
+  /* Location */
+}
+
+{
+  /* Like */
+}
+export const likeUser = async (likedId, likerId) => {
+  try {
+    const response = await api.post(`/interactions/like/${likedId}/${likerId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi like:", error);
+    throw new Error(error.response?.data?.detail || "Lỗi khi like người dùng");
+  }
+};
+
+{
+  /* Upload anh */
+}
+
+export const uploadProfileImage = async (profileId, imageUris) => {
+  const formData = new FormData();
+
+  for (let index = 0; index < imageUris.length; index++) {
+    const uri = imageUris[index];
+    const filename = uri.split("/").pop();
+    const match = /\.(\w+)$/.exec(filename ?? "");
+    const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    formData.append("files", {
+      uri,
+      name: filename || `profile${index}.jpg`,
+      type,
+    });
+  }
+
+  try {
+    const response = await api.post(`/images/profile/${profileId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    console.log("Upload profile ảnh thành công");
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Upload profile image failed",
+      error.response?.data || error.message
+    );
+    throw new Error("Upload profile image failed");
+  }
+};
+
+// export const getProfileImage = async (title) => {
+//   try {
+//     return `http://10.0.2.2:8000/static/images/profile/${title}`;
+//   } catch (error) {
+//     throw new Error("Cannot generate profile image URL");
+//   }
+// };
+export const getProfileImage = (title) => {
+  if (!title) return null;
+  // ✅ Dùng `baseURL` động
+  return `${baseURL}/static/images/profile/${title}`;
+};
+
+// export const getAvatarImage = (titleOrPath) => {
+//   if (!titleOrPath) return null;
+//   const filename = titleOrPath.split(/[/|\\]/).pop();
+//   // ✅ Dùng `baseURL` động
+//   return `${baseURL}/static/images/avatar/${filename}`;
+// };
+
+// export const getAvatarImage = (avatarData) => {
+//   if (!avatarData) return null;
+
+//   if (typeof avatarData === "object" && avatarData.id) {
+//     return `${baseURL}/images/account/${avatarData.id}`;
+//   }
+
+//   if (typeof avatarData === "number") {
+//     return `${baseURL}/images/account/${avatarData}`;
+//   }
+
+//   if (typeof avatarData === "string") {
+//     const filename = avatarData.split("\\").pop().split("/").pop();
+//     return `${baseURL}/static/images/avatar/${filename}`;
+//   }
+
+//   return null;
+// };
+
+export const getAvatarImage = (avatarData) => {
+  if (!avatarData) return null;
+
+  // object có id (BE trả về)
+  if (typeof avatarData === "object" && avatarData.id) {
+    return `${baseURL}/images/account/${avatarData.id}`;
+  }
+
+  // number
+  if (typeof avatarData === "number") {
+    return `${baseURL}/images/account/${avatarData}`;
+  }
+
+  // string
+  if (typeof avatarData === "string") {
+    // đã là full url
+    if (avatarData.startsWith("http")) {
+      return avatarData;
+    }
+
+    const filename = avatarData.split("\\").pop().split("/").pop();
+    return `${baseURL}/static/images/avatar/${filename}`;
+  }
+
+  return null;
+};
+
+
+export const deleteProfileImage = async (imageId) => {
+  try {
+    const response = await api.delete(`/images/profile/${imageId}`);
+    console.log("Xóa ảnh thành công:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Xóa ảnh thất bại", error.response?.data || error.message);
+    throw new Error("Delete profile image failed");
+  }
+};
+
+export const uploadAvatar = async (email, imageUri) => {
+  const formData = new FormData();
+
+  const filename = imageUri.split("/").pop();
+  const match = /\.(\w+)$/.exec(filename ?? "");
+  const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+  formData.append("file", {
+    uri: imageUri,
+    name: filename || "avatar.jpg",
+    type,
+  });
+
+  try {
+    const response = await api.post(`/images/account/${email}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    console.log("Upload avatar thành công");
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Upload avatar failed",
+      error.response?.data || error.message
+    );
+    throw new Error("Upload avatar failed");
+  }
+};
+
+// export const getAvatarImage = (titleOrPath) => {
+//   // Nếu là đường dẫn có "static/", cắt tên file ra
+//   const filename = titleOrPath?.split("\\").pop(); // hoặc .split("/").pop() nếu dùng dấu /
+
+//   return `http://10.0.2.2:8000/static/images/avatar/${filename}`;
+// };
+
+{
+  /* Profile */
+}
+
+export const getProfileById = async (profileId) => {
+  try {
+    // Lấy access_token từ AsyncStorage
+    const token = await AsyncStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("Không có access_token");
+    }
+
+    // Gọi API với header Authorization
+    const response = await api.get(`/profiles/${profileId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Lỗi khi lấy profile:",
+      error.response?.data || error.message
+    );
+    throw new Error("Không thể tải hồ sơ người dùng");
+  }
+};
+
+export const updateProfile = async (profile_id, data) => {
+  try {
+    // Lấy access_token từ AsyncStorage
+    const token = await AsyncStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("Không có access_token");
+    }
+
+    // Gọi API với header Authorization
+    const response = await api.put(`/profiles/update/${profile_id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    const detail =
+      error.response?.data?.detail || error.message || "Network error";
+    throw new Error(
+      typeof detail === "string" ? detail : JSON.stringify(detail)
+    );
+  }
+};
+
+export const getWhoLikedMe = async (user_id) => {
+  try {
+    const res = await api.get(`/matching/who-liked-me/${user_id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Lỗi API getWhoLikedMe:", error.message);
+    throw error;
+  }
+};
+
+// Thêm 2 hàm này vào cuối file services/api.js của bạn
+
+// ... (code cũ của bạn như login, verifyOtp, fetchMatches...)
+
+/**
+ * Lấy danh sách các cuộc hội thoại của một người dùng
+ * @param {number} accountId ID của người dùng
+ */
+export const fetchConversations = async (accountId) => {
+  try {
+    const response = await api.get(`/messages/conversations/${accountId}`);
+    return response.data; // Trả về thẳng data cho tiện
+  } catch (error) {
+    console.error("API Error: fetchConversations", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch conversations"
+    );
+  }
+};
+
+/**
+ * Xóa một cuộc hội thoại (unmatch)
+ * @param {number} partnerId ID của người mình muốn unmatch
+ * @param {number} accountId ID của chính mình
+ */
+
+
+export const unmatchConversation = async (user1Id, user2Id) => {
+  try {
+    const res = await api.delete(`/interactions/unmatch/${user1Id}/${user2Id}`);
+    return res.data;
+  } catch (err) {
+    console.error("API Error - unmatchConversation:", err.response?.data || err);
+    throw new Error(err.response?.data?.detail || "Unmatch failed");
+  }
+};
+
+
+export const getMessageHistory = async (user1_id, user2_id) => {
+  try {
+    // SỬA LỖI TẠI ĐÂY: Dùng `api` thay vì `apiClient`
+    const response = await api.get("/messages/history", {
+      params: { user1_id, user2_id },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy lịch sử tin nhắn:", error);
+    return [];
+  }
+};
+
+// export const createChatSocket = async () => {
+//   const token = await AsyncStorage.getItem("access_token");
+//   if (!token) {
+//     console.error("❌ Không có access_token");
+//     return null;
+//   }
+//   const ws = new WebSocket(`${WS_BASE_URL}/ws/chat?token=${token}`);
+//   return ws;
+// };
+export const createChatSocket = async () => {
+  const token = await AsyncStorage.getItem("access_token");
+  if (!token) {
+    console.error("❌ Không tìm thấy access_token trong localStorage.");
+    return null;
+  }
+
+  const ws = new WebSocket(`${WS_BASE_URL}/ws/chat?token=${encodeURIComponent(token)}`);
+
+  ws.onopen = () => console.log("✅ WebSocket connected:", ws.url);
+  ws.onerror = (err) => console.error("⚠️ WebSocket error:", err);
+
+  return ws;
+};
+
+export const getPackages = async () => {
+  const res = await api.get("/packages");
+  return res.data;
+};
+
+
+export const getDatingAdvice = async () => {
+  try {
+    // Dùng 'api.get' và gọi đến endpoint đã tạo ở backend
+    const response = await api.get("/dating-advice/");
+    // Trả về thẳng data (nơi chứa 'videos' và 'tips')
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || "Không thể tải nội dung.");
+  }
+};
+ 
+
+export const getSameTargetUsers = async () => {
+  try {
+    const res = await api.get("/profiles/match-target");
+    const { profiles, can_view_photos } = res.data;
+    const formattedProfiles = profiles.map((user) => ({
+      ...user,
+      avatar_url: user.avatar?.url
+        ? `${baseURL}/${user.avatar.url}`.replace(/\\/g, "/")
+        : null,
+    }));
+
+    return {
+      profiles: formattedProfiles,
+      can_view_photos,
+    };
+  } catch (err) {
+    console.error("Error getSameTargetUsers:", err);
+    throw err;
+  }
+};
+
+export const getNearbyUsers = async (accountId, radius) => {
+  const response = await api.get("/location/nearby_users_by_account", {
+    params: {
+      account_id: accountId,
+      radius,
+    },
+  });
+  return response.data.map((user) => ({
+    ...user,
+    avatar_url: user.avatar?.url
+      ? `${baseURL}/${user.avatar.url.replace(/\\/g, "/")}`
+      : null,
+  }));
+};
+
+
+// export const getUsersWhoLikedMe = async (userId) => {
+//   console.log("📡 Gọi API getUsersWhoLikedMe với userId:", userId);
+//   if (!userId) return [];
+
+//   try {
+//     const response = await api.get(`/interactions/liked-me/${userId}`);
+//     const data = response.data;
+
+//     // Chuyển avatar_url thành URL đầy đủ
+//     const formatted = data.map((user) => ({
+//       ...user,
+//       avatar_url: user.avatar?.url
+//         ? `${baseURL}/${user.avatar.url.replaceAll("\\", "/")}`
+//         : null,
+//     }));
+
+//     console.log("✅ Kết quả từ API liked-me (đã format avatar_url):", formatted);
+//     return formatted;
+//   } catch (error) {
+//     console.error("❌ Lỗi khi lấy danh sách người đã thích mình:", error);
+//     return [];
+//   }
+// };
+
+
+
+export const getVerifyStatus = async (accountId) => {
+  const res = await api.get(`/verify/${accountId}/verify-status`);
+  return res.data; // { is_verified: true/false }
+};
+
+export const requestPose = async (accountId) => {
+  const res = await api.post(`/verify/request-pose?account_id=${accountId}`);
+  return res.data; 
+  // { pose_key, pose_sample_image }
+};
+
+export const requestVerification = async (accountId, poseKey, fileUri) => {
+  const formData = new FormData();
+  formData.append("account_id", accountId);
+  formData.append("pose_key", poseKey);
+  formData.append("file", {
+    uri: fileUri,
+    name: "verify.jpg",
+    type: "image/jpeg",
+  });
+
+  return api.post("/verify/request", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+
+
+export const createDailyStatus = async (content: string) => {
+  const res = await api.post("/daily-status", { content });
+  return res.data;
+};
+
+export const deleteDailyStatus = async () => {
+  const res = await api.delete("/daily-status");
+  return res.data;
+};
+
+export const getUserDailyStatus = async (userId: number) => {
+  const res = await api.get(`/daily-status/user/${userId}`);
+  return res.data;
+};
+
+

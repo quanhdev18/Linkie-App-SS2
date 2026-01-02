@@ -1,0 +1,1 @@
+VEDIC_ASTRO_API_KEY = "66aad56a-3ea1-59e0-82dd-6d336c1601bb"

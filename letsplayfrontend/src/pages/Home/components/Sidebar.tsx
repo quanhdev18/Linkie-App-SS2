@@ -2,9 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import MatchQueue from "./MatchQueue";
 import MessageList from "./MessageList";
-import { getProfileById, getAvatarImage } from "../../../services/api";
+import { getProfileById, getAvatarImage, getUserDailyStatus } from "../../../services/api";
 import userAvatar from "../../../assets/image/image.png";
 import { ArrowLeft } from "lucide-react";
+import DailyStatusBubble from "../components/DailyStatusBubble";
+import DailyStatusModal from "../components/DailyStatusModal";
+
 
 const Sidebar: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
@@ -14,6 +17,37 @@ const Sidebar: React.FC = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [dailyStatus, setDailyStatus] = useState<any>(null);
+  const [openStatusModal, setOpenStatusModal] = useState(false);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const userId = localStorage.getItem("account_id");
+        console.log("🔥 user_id from localStorage =", userId);
+
+        if (!userId) {
+          console.warn("❌ Không có user_id trong localStorage");
+          return;
+        }
+
+        const data = await getUserDailyStatus(Number(userId));
+        console.log("🔥 daily status API result =", data);
+
+        if (data && data.content) {
+          setDailyStatus(data);
+        } else {
+          setDailyStatus(null);
+        }
+      } catch (err) {
+        console.error("❌ fetchStatus error", err);
+        setDailyStatus(null);
+      }
+    };
+
+
+    fetchStatus();
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -23,8 +57,11 @@ const Sidebar: React.FC = () => {
         const profileId = parseInt(idStr, 10);
         const data = await getProfileById(profileId);
         setProfile(data);
-        if (data?.avatar?.title) {
-          setAvatarUri(getAvatarImage(data.avatar.title));
+
+        if (data?.avatar?.id) {
+          setAvatarUri(getAvatarImage(data.avatar.id));
+        } else {
+          setAvatarUri(null);
         }
       } catch (err) {
         console.error("Lỗi khi tải profile:", err);
@@ -32,6 +69,28 @@ const Sidebar: React.FC = () => {
     };
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+
+    // Danh sách các trang cần hiển thị Sidebar kiểu Menu Profile
+    const profileRoutes = ["/profile", "/settings", "/contact"];
+
+    if (profileRoutes.includes(currentPath)) {
+      // Nếu đang ở profile, settings, contact -> Bật Menu Profile
+      setIsProfileMenu(true);
+    } else if (currentPath === "/home") {
+      // Nếu ở Home -> Tắt Menu Profile (về mặc định)
+      setIsProfileMenu(false);
+    }
+  }, [location.pathname]);
+
+  // useEffect(() => {
+  //   // Kiểm tra nếu điều hướng đến /home và có state resetSidebar
+  //   if (location.pathname === "/home" && location.state?.resetSidebar) {
+  //     setIsProfileMenu(false);
+  //   }
+  // }, [location]);
 
   // 👉 Khi click avatar: mở giao diện menu profile
   const handleAvatarClick = () => {
@@ -48,10 +107,10 @@ const Sidebar: React.FC = () => {
   // 👉 Nếu đang trong giao diện Profile menu
   if (isProfileMenu) {
     return (
-      <aside className="flex flex-col h-screen bg-white border-r items-center  w-72">
+      <aside className="flex flex-col h-screen bg-white border-r items-center  w-[320px]">
         {/* Back + Avatar */}
         {/* Back + Avatar (đồng bộ style với phần avatar chính) */}
-        <div className="flex items-center gap-3 p-4 h-16 w-full ">
+        <div className="flex items-center gap-3 p-4 h-20 w-full ">
           <button
             onClick={handleBack}
             className="p-2 rounded-full hover:bg-gray-100 transition flex-shrink-0"
@@ -114,6 +173,16 @@ const Sidebar: React.FC = () => {
           </button>
 
           <button
+            onClick={() => navigate("/advice")}
+            className={`${location.pathname === "/advice"
+              ? "text-black font-semibold underline decoration-yellow-500 underline-offset-4"
+              : "hover:text-black"
+              }`}
+          >
+            Tip hẹn hò
+          </button>
+
+          <button
             onClick={() => navigate("/settings")}
             className={`${location.pathname === "/settings"
               ? "text-black font-semibold underline decoration-yellow-500 underline-offset-4"
@@ -157,27 +226,48 @@ const Sidebar: React.FC = () => {
   return (
     <aside
       className={`flex flex-col h-screen bg-white border-r transition-all duration-300 
-      w-20 md:w-72 sm:w-20`}
+      w-20 md:w-[320px] sm:w-20`}
     >
       {/* Profile */}
-      <button
-        onClick={handleAvatarClick}
-        className="block hover:bg-gray-50 w-full"
-      >
-        <div className="flex items-center gap-3 p-4 h-16">
-          <img
-            src={avatarUri || userAvatar}
-            alt="User Avatar"
-            className="w-12 h-12 rounded-full object-cover mx-auto md:mx-0"
-          />
-          <div className="hidden md:block">
-            <div className="text-sm font-semibold">
-              {profile?.username || "Đang tải..."}
+      <div className="block hover:bg-gray-50 w-full">
+        <div className="flex items-center justify-between p-4 h-20">
+
+          {/* Avatar + username */}
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={handleAvatarClick}
+          >
+            <img
+              src={avatarUri || userAvatar}
+              alt="User Avatar"
+              className="w-12 h-12 rounded-full object-cover"
+            />
+
+            <div className="hidden md:block">
+              <div className="text-sm font-semibold">
+                {profile?.username || "Đang tải..."}
+              </div>
+
+              {typeof profile?.profile_age_days === "number" && (
+                <div className="text-xs text-gray-400">
+                  Hồ sơ đã hoạt động {profile.profile_age_days} ngày
+                </div>
+              )}
+              <div className="text-xs text-gray-500 flex items-center gap-1"> <span className="w-2 h-2 bg-green-500 rounded-full block"></span> <span>Online</span> </div>
             </div>
-            <div className="text-xs text-gray-500">Online</div>
           </div>
+
+          {/* Daily status cloud */}
+          <div className="hidden md:block">
+            <DailyStatusBubble
+              content={dailyStatus?.content}
+              onClick={() => setOpenStatusModal(true)}
+            />
+          </div>
+
         </div>
-      </button>
+      </div>
+
 
       {/* Match Queue */}
       <div className="px-4 py-3 hidden md:block">
@@ -212,8 +302,21 @@ const Sidebar: React.FC = () => {
 
       {/* Footer */}
       <div className="hidden md:block p-4 text-xs text-gray-500 text-center">
-        © 2025 Linkie
+        © 2025 Linkie - Quang Anh
       </div>
+      <DailyStatusModal
+
+        open={openStatusModal}
+        onClose={() => setOpenStatusModal(false)}
+        status={dailyStatus}
+        onUpdated={async () => {
+          const userId = localStorage.getItem("account_id");
+          if (!userId) return;
+          const data = await getUserDailyStatus(userId);
+          setDailyStatus(data);
+        }}
+      />
+
     </aside>
   );
 };

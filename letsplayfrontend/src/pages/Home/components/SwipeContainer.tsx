@@ -1012,6 +1012,9 @@ import { getProfiles, likeUser, getLikedUsers, getLocationByAccountId, getLocati
 
 interface SwipeContainerProps {
   filters: any;
+  onLoaded?: () => void;
+  singleProfile?: any;
+  onLikedUser?: (id: number) => void;
 }
 
 interface Profile {
@@ -1023,9 +1026,10 @@ interface Profile {
   images: { url: string }[];
 }
 
+
 const ANIMATION_DURATION = 400;
 
-const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters }) => {
+const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters, onLoaded, singleProfile, onLikedUser, }) => {
   const [accountId, setAccountId] = useState<number | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [locationNames, setLocationNames] = useState<Record<number, string>>({});
@@ -1035,7 +1039,13 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchAllData = useCallback(async () => {
+    if (singleProfile) {
+      setProfiles([singleProfile]);
+      setStatus("success");
+      return;
+    }
     setStatus("loading");
+
     try {
       const storedAccountId = localStorage.getItem("account_id");
       if (!storedAccountId) throw new Error("User not logged in");
@@ -1043,53 +1053,38 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters }) => {
       setAccountId(parsedId);
 
       const [allProfiles, likedUsers] = await Promise.all([
-        getProfiles(),        // nếu getProfiles cần token, truyền token ở đây
+        getProfiles(),
         getLikedUsers(parsedId),
       ]);
 
-      console.log("🧩 allProfiles:", allProfiles);
-      console.log("💖 likedUsers:", likedUsers);
-      console.log("🎛 incoming filters:", filters);
-
       const likedIds = new Set(likedUsers.map((item: any) => item.liked_id));
-      // start with everyone except self and already-liked
+
       let filtered = allProfiles.filter(
         (p: any) => p.account_id !== parsedId && !likedIds.has(p.account_id)
       );
 
-      // decide whether we should actually apply filters:
-      const shouldApplyFilter =
-        !!filters &&
-        (
-          (typeof filters.minAge !== "undefined" && filters.minAge !== null) ||
-          (typeof filters.maxAge !== "undefined" && filters.maxAge !== null) ||
-          (Array.isArray(filters.gender) && filters.gender.length > 0) ||
-          (Array.isArray(filters.orientation) && filters.orientation.length > 0) ||
-          (Array.isArray(filters.relationship) && filters.relationship.length > 0)
-        );
+      // Áp dụng filters như trước
+      const shouldApplyFilter = !!filters && (
+        (typeof filters.minAge !== "undefined" && filters.minAge !== null) ||
+        (typeof filters.maxAge !== "undefined" && filters.maxAge !== null) ||
+        (Array.isArray(filters.gender) && filters.gender.length > 0) ||
+        (Array.isArray(filters.orientation) && filters.orientation.length > 0) ||
+        (Array.isArray(filters.relationship) && filters.relationship.length > 0)
+      );
 
       if (shouldApplyFilter) {
         filtered = filtered.filter((user: any) => {
-          // age
           const age = new Date().getFullYear() - new Date(user.date_of_birth).getFullYear();
+
           let ageMatch = true;
-          if (typeof filters.minAge !== "undefined" && filters.minAge !== null) {
-            ageMatch = ageMatch && age >= filters.minAge;
-          }
-          if (typeof filters.maxAge !== "undefined" && filters.maxAge !== null) {
-            ageMatch = ageMatch && age <= filters.maxAge;
-          }
+          if (typeof filters.minAge !== "undefined") ageMatch = age >= filters.minAge;
+          if (typeof filters.maxAge !== "undefined") ageMatch = ageMatch && age <= filters.maxAge;
 
-          // gender (assuming user.gender matches text used in filters, otherwise map)
           let genderMatch = true;
-          if (Array.isArray(filters.gender) && filters.gender.length > 0) {
-            genderMatch = filters.gender.includes(user.gender);
-          }
+          if (filters.gender && filters.gender.length > 0) genderMatch = filters.gender.includes(user.gender);
 
-          // orientation / relationship - add logic if your user object has those fields
           let orientationMatch = true;
           if (Array.isArray(filters.orientation) && filters.orientation.length > 0) {
-            // adjust according to API: if user.orientation exists and matches filter values
             orientationMatch = filters.orientation.includes(user.orientation);
           }
 
@@ -1100,10 +1095,6 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters }) => {
 
           return ageMatch && genderMatch && orientationMatch && relationshipMatch;
         });
-
-        console.log("✅ applied filters -> filtered count:", filtered.length);
-      } else {
-        console.log("ℹ️ no filters applied, showing all (minus liked/self). Count:", filtered.length);
       }
 
       if (filtered.length === 0) {
@@ -1112,30 +1103,23 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters }) => {
         return;
       }
 
-      // Lấy vị trí tên
-      const locationPromises = filtered.map(async (user: any) => {
-        try {
-          const location = await getLocationByAccountId(user.account_id);
-          if (location?.latitude && location?.longitude) {
-            const name = await getLocationName(location.latitude, location.longitude);
-            return [user.account_id, name || "Không rõ vị trí"];
-          }
-          return [user.account_id, "Không rõ vị trí"];
-        } catch {
-          return [user.account_id, "Không rõ vị trí"];
-        }
+      const newLocationNames: Record<number, string> = {};
+      filtered.forEach((user: any) => {
+        newLocationNames[user.account_id] = user.location_name || "Không rõ vị trí";
       });
 
-      const locationResults = await Promise.all(locationPromises);
-      const newLocationNames = Object.fromEntries(locationResults);
       setLocationNames(newLocationNames);
       setProfiles(filtered);
       setStatus("success");
+
+      onLoaded && onLoaded();
     } catch (err) {
       console.error("Fetch error:", err);
       setStatus("error");
     }
-  }, [filters]);
+  }, [filters, singleProfile]);
+
+
 
 
   useEffect(() => {
@@ -1151,59 +1135,92 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters }) => {
         if (likedUser && accountId) {
           await likeUser(likedUser.account_id, accountId);
         }
+        if (onLikedUser) onLikedUser(likedUser.account_id);
       }
+      if (singleProfile) return;
+
       setCurrentIndex((prev) => (prev + 1) % profiles.length);
       setSwipeDirection("none");
       scrollContainerRef.current?.scrollTo(0, 0);
     }, ANIMATION_DURATION);
   };
 
-  // --- RENDER GIAO DIỆN ---
   if (status === "loading")
-    return <div className="flex justify-center items-center h-full text-gray-400">Đang tải...</div>;
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <img
+          src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExcGQxZnZubG85cjV2bHNrdDk4bWEyYXd2ejQzdDgyZDdremFjcXB0biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/qutWTSucYBUOcVtD3N/giphy.gif"
+          alt="loading"
+          className="w-40 h-40 object-contain"
+        />
+        <p className="mt-4 text-gray-500 text-lg font-medium">
+          Hãy cùng gặp bạn mới ngay nào &gt;&lt;
+        </p>
+      </div>
+    );
+
   if (status === "error")
     return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-400">
-        <p>Không thể tải dữ liệu 😢</p>
+      <div className="flex flex-col items-center justify-center h-screen text-gray-500">
+        <p className="text-lg mb-3">Không thể tải dữ liệu 😢</p>
         <button
           onClick={fetchAllData}
-          className="mt-4 bg-yellow-400 text-white px-4 py-2 rounded-lg hover:bg-yellow-500"
+          className="mt-2 bg-yellow-400 text-white px-5 py-2 rounded-lg hover:bg-yellow-500 transition"
         >
           Thử lại
         </button>
       </div>
     );
-  if (status === "empty")
-  return (
-    <div className="flex justify-center items-center h-screen w-full text-gray-400 text-lg">
-      Không có hồ sơ phù hợp 😅
-    </div>
-  );
 
+  if (status === "empty")
+    return (
+      <div className="flex flex-col items-center justify-center h-screen text-gray-400 text-lg">
+        <p>Không có hồ sơ phù hợp 😅</p>
+      </div>
+    );
 
   const currentProfile = profiles[currentIndex % profiles.length];
   const age = new Date().getFullYear() - new Date(currentProfile.date_of_birth).getFullYear();
   const location = locationNames[currentProfile.account_id] || "Không rõ vị trí";
 
   return (
-    <div className="flex h-screen bg-white items-center justify-center pb-14">
-      <div className="relative w-full max-w-[1100px] h-[800px] bg-white rounded-2xl shadow-lg">
+    // <div className="flex h-screen bg-white items-center justify-center pb-14">
+    // <div className="flex h-full w-full bg-white items-center justify-center pb-14 overflow-hidden">
+    <div className="flex h-full w-full bg-white items-center justify-center px-4 sm:px-6 md:px-10 lg:px-14 pb-14">
+
+      {/* <div className="relative w-full max-w-[1100px] h-[800px] bg-white rounded-2xl shadow-lg"> */}
+      {/* <div className="relative w-full max-w-[1100px] aspect-[3/4] h-[730px] bg-white rounded-2xl shadow-lg overflow-hidden" style={{ marginTop: '80px' }}> */}
+      <div
+        className="
+          relative 
+          w-full 
+          max-w-[1100px] 
+          aspect-[3/4]
+          max-h-[730px]
+          bg-white 
+          rounded-2xl 
+          shadow-lg 
+          overflow-hidden
+          mt-20
+        "
+      >
+
         <div
           className={`relative w-full h-full rounded-2xl overflow-hidden transition-transform ${swipeDirection === "left" ? "animate-swipe-out-left" : ""
             } ${swipeDirection === "right" ? "animate-swipe-out-right" : ""}`}
         >
           <div ref={scrollContainerRef} className="w-full h-full overflow-y-auto no-scrollbar snap-y snap-mandatory">
             {/* Slide 1: Ảnh + Thông tin cơ bản */}
-            <div className="w-full h-full snap-start grid grid-cols-2">
-              {/* Ảnh bên trái */}
-              <img
-                src={currentProfile.images?.[0]?.url}
-                alt={currentProfile.username}
-                className="w-full h-full object-cover rounded-l-2xl"
-              />
+            <div className="w-full max-h-[730px] snap-start grid grid-cols-2">
+              <div
+                className="w-full aspect-[3/4] rounded-l-2xl bg-gray-100 bg-center bg-cover"
+                style={{
+                  backgroundImage: `url(${currentProfile.images?.[0]?.url || "/images/default-avatar.png"})`,
+                }}
+              ></div>
 
-              {/* Thông tin bên phải */}
-              <div className="flex flex-col justify-center items-start bg-[#fff9e6] px-12 rounded-r-2xl">
+
+              <div className="flex flex-col justify-center items-start bg-[#fff9e6] px-12">
                 <h2 className="text-4xl font-bold text-gray-800">
                   {currentProfile.username}, {age}
                 </h2>
@@ -1211,41 +1228,55 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters }) => {
               </div>
             </div>
 
-            {/* Slide 2: Bio & Sở thích */}
-            <div className="w-full h-full snap-start flex flex-col justify-center items-center bg-[#fff9e6] space-y-8 px-8">
-              <h3 className="font-semibold text-gray-800 text-xl">
-                About {currentProfile.username}
-              </h3>
-              <p className="text-gray-700 text-center text-lg max-w-xl">
-                {currentProfile.bio || "Chưa có mô tả."}
-              </p>
 
-              {/* Ví dụ thêm sở thích */}
-              {currentProfile.hobbies && (
-                <div className="flex flex-wrap justify-center gap-2 mt-4">
-                  {currentProfile.hobbies.map((hobby: string, i: number) => (
-                    <span
-                      key={i}
-                      className="bg-yellow-200 text-gray-800 px-3 py-1 rounded-full text-sm"
-                    >
-                      {hobby}
-                    </span>
-                  ))}
+            {/* Slide 2: Bio & Sở thích */}
+            <div className="w-full h-full snap-start grid grid-cols-2">
+              <div className="flex flex-col justify-center items-center bg-[#fff9e6] px-8">
+                <h3 className="font-semibold text-gray-800 text-xl mb-4">
+                  Bio của {currentProfile.username}
+                </h3>
+                <p className="text-gray-700 text-center text-lg max-w-xl">
+                  {currentProfile.bio || "Chưa có mô tả."}
+                </p>
+                {currentProfile.hobbies && (
+                  <div className="flex flex-wrap justify-center gap-2 mt-6">
+                    {currentProfile.hobbies.map((hobby: string, i: number) => (
+                      <span
+                        key={i}
+                        className="bg-yellow-200 text-gray-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {hobby}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-center bg-black rounded-r-2xl">
+                <div className="aspect-[3/4] w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                  <img
+                    src={currentProfile.images?.[1]?.url || currentProfile.images?.[0]?.url || "/images/default-avatar.png"}
+                    alt="bio"
+                    className="w-full h-full object-cover object-center"
+                  />
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Slide 3: Mục đích hẹn hò */}
-            <div className="w-full h-full snap-start grid grid-cols-2 ">
-              {/* Ảnh */}
-              <img
-                src={currentProfile.images?.[1]?.url || currentProfile.images?.[0]?.url}
-                alt="Relationship goal"
-                className="w-full h-full object-cover rounded-l-2xl"
-              />
 
-              {/* Thông tin mục đích */}
-              <div className="flex flex-col justify-center items-center bg-[#fff9e6] rounded-r-2xl px-10">
+            {/* Slide 3: Mục đích hẹn hò */}
+            <div className="w-full h-full snap-start grid grid-cols-2">
+              <div className="flex items-center justify-center bg-black rounded-l-2xl">
+                <div className="aspect-[3/4] w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                  <img
+                    src={currentProfile.images?.[2]?.url || currentProfile.images?.[0]?.url || "/images/default-avatar.png"}
+                    alt="relationship goal"
+                    className="w-full h-full object-cover object-center"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-center items-center bg-[#fff9e6] px-10">
                 <h3 className="text-lg text-gray-700 mb-2">Mục đích hẹn hò</h3>
                 <p className="text-2xl font-semibold text-gray-800 text-center">
                   {currentProfile.target_type || "Chưa chia sẻ"}
@@ -1253,12 +1284,27 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters }) => {
               </div>
             </div>
 
+
             {/* Các ảnh còn lại */}
-            {currentProfile.images?.slice(2).map((image, i) => (
-              <div key={i} className="w-full h-full snap-start">
-                <img src={image.url} alt={`Ảnh ${i + 3}`} className="w-full h-full object-cover rounded-2xl" />
+            {currentProfile.images?.slice(3).map((image, i) => (
+              <div key={i} className="w-full h-full snap-start grid grid-cols-2">
+                <div className="flex items-center justify-center bg-black rounded-l-2xl">
+                  <div className="aspect-[3/4] w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                    <img
+                      src={image.url}
+                      alt={`Ảnh ${i + 4}`}
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col justify-center items-center bg-[#fff9e6]">
+                  <p className="text-gray-700 italic">
+                    Ảnh {i + 4} của {currentProfile.username}
+                  </p>
+                </div>
               </div>
             ))}
+
           </div>
 
         </div>

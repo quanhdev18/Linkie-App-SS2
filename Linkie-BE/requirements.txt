@@ -11,3 +11,8 @@ shapely
 aioredis
 paypal-checkout-serversdk
 pygments
+
+python-multipart
+pydantic-settings
+boto3
+httpx
