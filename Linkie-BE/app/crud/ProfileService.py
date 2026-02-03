@@ -1,82 +1,8 @@
-# # app/crud/user.py
-# from datetime import datetime
-
-# from fastapi import HTTPException
-# from sqlalchemy.orm import Session
-
-# from app.models.ProfileModel import Profile
-# from app.schemas.ProfileDTO import ProfileCreate, ProfileUpdate
-
-
-
-# def get_all_profiles(db: Session):
-#     return db.query(Profile).all()
-
-# def create_profile(db: Session, profile_in: ProfileCreate, account_id: int) -> Profile:
-#     existing_profile = db.query(Profile).filter(Profile.account_id == account_id).first()
-#     if existing_profile:
-#         raise HTTPException(status_code=400, detail="Profile already exists for this account")
-
-#     new_profile = Profile(
-#         username=profile_in.username,
-#         gender=profile_in.gender,
-#         date_of_birth=profile_in.date_of_birth,
-#         bio=profile_in.bio,
-#         created_at=datetime.utcnow(),
-#         target_type=profile_in.target_type,
-#         hobby=profile_in.hobby,
-#         height=profile_in.height,
-#         zodiac_sign=profile_in.zodiac_sign,
-#         job=profile_in.job,
-#         education=profile_in.education,
-#         account_id=account_id
-#     )
-#     db.add(new_profile)
-#     db.commit()
-#     db.refresh(new_profile)
-#     new_profile = db.query(Profile).filter(Profile.id == new_profile.id).first()
-#     return new_profile
-#     # return {"profile_id": new_profile.id}
-
-# def update_profile(db: Session, profile_id: int, update_data: ProfileUpdate) -> Profile:
-#     profile = db.query(Profile).filter(Profile.id == profile_id).first()
-#     if not profile:
-#         raise HTTPException(status_code=404, detail="Profile not found")
-
-#     update_dict = update_data.model_dump(exclude_unset=True)
-#     for field, value in update_dict.items():
-#         setattr(profile, field, value)
-
-#     db.commit()
-#     db.refresh(profile)
-#     return profile
-
-# def delete_profile(db: Session, profile_id: int) -> str:
-#     profile = db.query(Profile).filter(Profile.id == profile_id).first()
-#     if not profile:
-#         raise HTTPException(status_code=404, detail="Profile not found")
-
-#     db.delete(profile)
-#     db.commit()
-#     return f"Xoá thành công profile có id: {profile_id}"
-
-# def get_profile_by_id(db: Session, profile_id: int) -> Profile:
-#     profile = db.query(Profile).filter(Profile.id == profile_id).first()
-#     if not profile:
-#         raise HTTPException(status_code=404, detail="Profile not found")
-
-#     return profile
-
-
-
-
-
-# app/crud/user.py
 from datetime import datetime
 import json
 from sqlalchemy.sql import func
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional, Dict, Any
 from app.models.ProfileModel import Profile
 from app.schemas.ProfileDTO import ProfileCreate, ProfileUpdate
@@ -84,7 +10,37 @@ from app.models.LocationModel import Location
 from app.crud.LocationService import LocationService
 from app.crud.package import get_active_package
 from app.core.check_permission import user_can_see_photos
-# from datetime import datetime, timezone
+
+
+def get_profile_by_account_id(db, account_id: int) -> Profile:
+    profile = (
+        db.query(Profile)
+        .options(
+            joinedload(Profile.avatar),
+            joinedload(Profile.images),
+        )
+        .filter(Profile.account_id == account_id)
+        .first()
+    )
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found for this account")
+
+    # Nếu chưa có location_name thì resolve từ bảng location
+    if not profile.location_name:
+        location = (
+            db.query(Location)
+            .filter(Location.account_id == account_id)
+            .first()
+        )
+        if location:
+            profile.location_name = LocationService.get_location_name(
+                location.latitude,
+                location.longitude
+            )
+
+    return profile
+
 
 def decode_unicode(s: Optional[str]) -> Optional[str]:
     if not s:
@@ -132,7 +88,6 @@ def create_profile(db: Session, profile_in: ProfileCreate, account_id: int) -> P
     if existing_profile:
         raise HTTPException(status_code=400, detail="Profile already exists for this account")
     
-    # Chuyển job và education từ chuỗi sang dict
     job_dict = parse_job(profile_in.job)
     education_dict = parse_education(profile_in.education)
 
@@ -146,8 +101,8 @@ def create_profile(db: Session, profile_in: ProfileCreate, account_id: int) -> P
         hobby=profile_in.hobby,
         height=profile_in.height,
         zodiac_sign=profile_in.zodiac_sign,
-        job=profile_in.job,              # string
-        education=profile_in.education,  # string
+        job=profile_in.job,              
+        education=profile_in.education,  
         account_id=account_id
     )
     db.add(new_profile)
@@ -203,7 +158,6 @@ def get_profile_by_id(db: Session, profile_id: int) -> Profile:
     if not profile.location_name and profile.account_id:
         location = db.query(Location).filter(Location.account_id == profile.account_id).first()
         if location:
-            # convert lat/lng sang city
             profile.location_name = LocationService.get_location_name(location.latitude, location.longitude)
 
     
@@ -225,19 +179,11 @@ def get_profiles_with_same_target(db: Session, account_id: int):
         .all()
     )
 
-    # 🎯 Check package người dùng đang call API
     package = get_active_package(db, account_id)
     allow_photos = user_can_see_photos(package)
-    
-
-    # ❗❗ Quan trọng: BE trả FULL ẢNH – KHÔNG xoá
+ 
     return {
         "profiles": profiles,
         "can_view_photos": allow_photos
     }
 
-# def attach_profile_age(profile: Profile):
-#     now = datetime.now(timezone.utc)
-#     if profile.created_at:
-#         profile.profile_age_days = (now - profile.created_at).days
-#     return profile

@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import defaultAvatar from "@/assets/image/image.png";
-import { getUsersWhoLikedMe, getNearbyUsers, getSameTargetUsers, baseURL } from "@/services/api";
+import { getUsersWhoLikedMe, getNearbyUsers, getSameTargetUsers, baseURL, getWhoLikedMe } from "@/services/api";
 import SwipeContainer from "../Home/components/SwipeContainer";
 
 const Upgrade: React.FC = () => {
     const navigate = useNavigate();
+    // const [likedUsers, setLikedUsers] = useState<any[]>([]);
     const [likedUsers, setLikedUsers] = useState<any[]>([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [goalUsers, setGoalUsers] = useState<any[]>([]);
+    const [goalPage, setGoalPage] = useState(1);
+    const [goalHasMore, setGoalHasMore] = useState(true);
     const [loading, setLoading] = useState(true);
     const [showSwipePopup, setShowSwipePopup] = useState(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -17,51 +23,257 @@ const Upgrade: React.FC = () => {
     const [users, setUsers] = useState([]);
     const [canViewPhotos, setCanViewPhotos] = useState(false);
 
+    // const buildImageUrl = (path: string) => {
+    //     if (!path) return defaultAvatar;
+
+    //     if (path.startsWith("http")) return path;
+
+    //     if (path.startsWith("static/")) return `${baseURL}/${path}`;
+
+    //     return `${baseURL}/static/images/profile/${path}`;
+    // };
+
     const buildImageUrl = (path: string) => {
         if (!path) return defaultAvatar;
-
         if (path.startsWith("http")) return path;
 
-        if (path.startsWith("static/")) return `${baseURL}/${path}`;
+        // 1. Chuẩn hóa tất cả dấu \ thành /
+        const cleanPath = path.replace(/\\/g, "/");
 
-        return `${baseURL}/static/images/profile/${path}`;
+        // 2. Nếu trong chuỗi đã có sẵn chữ "static/", ta chỉ việc nối với baseURL
+        // Dùng includes để bắt được "static/" dù nó nằm ở bất kỳ đâu
+        if (cleanPath.includes("static/")) {
+            // Tìm vị trí của "static/" để tránh việc nối thừa path phía trước
+            const startIndex = cleanPath.indexOf("static/");
+            return `${baseURL}/${cleanPath.substring(startIndex)}`;
+        }
+
+        // 3. Nếu chỉ là tên file đơn thuần, mới nối với profile mặc định
+        return `${baseURL}/static/images/profile/${cleanPath}`;
     };
 
+    // useEffect(() => {
+    //     // const fetchLikedMe = async () => {
+    //     //     try {
+    //     //         const accountId = localStorage.getItem("account_id");
+    //     //         if (!accountId) throw new Error("Không tìm thấy account_id");
+
+    //     //         const [liked, nearby, goals] = await Promise.all([
+    //     //             getWhoLikedMe(accountId),
+    //     //             getNearbyUsers(accountId, 10),
+    //     //             getSameTargetUsers(),
+    //     //         ]);
+
+    //     //         setLikedUsers(liked);
+    //     //         setNearbyUsers(nearby);
+    //     //         setGoalUsers(goals.profiles || []);
+    //     //         setCanViewPhotos(goals.can_view_photos ?? false);
+
+    //     //     } catch (err) {
+    //     //         console.error("Lỗi khi tải danh sách:", err);
+    //     //     } finally {
+    //     //         setLoading(false);
+    //     //     }
+    //     // };
+    //     const fetchLikedMe = async (pageNumber = 1) => {
+    //         try {
+    //             const accountId = localStorage.getItem("account_id");
+    //             if (!accountId) return;
+
+    //             const data = await getWhoLikedMe(accountId, pageNumber);
+
+    //             if (data.length < 9) {
+    //                 setHasMore(false); // 🔴 hết dữ liệu
+    //             }
+
+    //             setLikedUsers(prev =>
+    //                 pageNumber === 1 ? data : [...prev, ...data]
+    //             );
+    //         } catch (err) {
+    //             console.error(err);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+
+
+    //     fetchLikedMe(1);
+    // }, []);
+
+    //     useEffect(() => {
+    //     const accountId = localStorage.getItem("account_id");
+    //     if (!accountId) return;
+
+    //     const fetchInitialData = async () => {
+    //         try {
+    //             setLoading(true);
+
+    //             const [nearby, goals] = await Promise.all([
+    //                 getNearbyUsers(accountId, 10),
+    //                 getSameTargetUsers(),
+    //             ]);
+
+    //             setNearbyUsers(nearby);
+    //             setGoalUsers(goals.profiles || []);
+    //             setCanViewPhotos(goals.can_view_photos ?? false);
+    //         } catch (err) {
+    //             console.error("Lỗi load nearby / goals:", err);
+    //         }
+    //     };
+
+    //     fetchInitialData();
+    //     fetchLikedMe(1);
+    // }, []);
+
     useEffect(() => {
-        const fetchLikedMe = async () => {
+        const accountId = localStorage.getItem("account_id");
+        if (!accountId) return;
+
+        const fetchInitialData = async () => {
             try {
-                const accountId = localStorage.getItem("account_id");
-                if (!accountId) throw new Error("Không tìm thấy account_id");
+                setLoading(true);
 
-                const [liked, nearby, goals] = await Promise.all([
-                    getUsersWhoLikedMe(accountId),
-                    getNearbyUsers(accountId, 10),
-                    getSameTargetUsers(),
-                ]);
-
-                setLikedUsers(liked);
+                const nearby = await getNearbyUsers(accountId, 10);
                 setNearbyUsers(nearby);
-                setGoalUsers(goals.profiles || []);
-                setCanViewPhotos(goals.can_view_photos ?? false);
 
+                await Promise.all([
+                    fetchLikedMe(1),
+                    fetchGoalUsers(1),
+                ]);
             } catch (err) {
-                console.error("Lỗi khi tải danh sách:", err);
+                console.error("Lỗi load data:", err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchLikedMe();
+        fetchInitialData();
     }, []);
+
+
+    const fetchLikedMe = async (pageNumber = 1) => {
+        try {
+            const accountId = localStorage.getItem("account_id");
+            if (!accountId) return;
+
+            const data = await getWhoLikedMe(accountId, pageNumber);
+
+            if (data.length < 9) {
+                setHasMore(false);
+            }
+
+            setLikedUsers(prev =>
+                pageNumber === 1 ? data : [...prev, ...data]
+            );
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    const fetchGoalUsers = async (pageNumber = 1) => {
+        try {
+            const data = await getSameTargetUsers(pageNumber);
+
+            setCanViewPhotos(data.can_view_photos ?? false);
+            setGoalHasMore(data.has_more ?? false);
+
+            setGoalUsers(prev =>
+                pageNumber === 1
+                    ? data.profiles
+                    : [...prev, ...data.profiles]
+            );
+        } catch (err) {
+            console.error("Lỗi load goal users:", err);
+        }
+    };
+
+
+    //     const UserGrid = ({
+    //         title,
+    //         users,
+    //         canViewPhotos
+    //     }: {
+    //         title: string;
+    //         users: any[];
+    //         canViewPhotos: boolean;
+    //     }) => (
+    //         <div className="w-full mb-10 flex flex-col items-center">
+    //             <p className="text-base font-semibold mb-4 text-gray-800">{title}</p>
+
+    //             {loading ? (
+    //     <p className="text-gray-500">Đang tải...</p>
+    // ) : users.length === 0 ? (
+    //     <p className="text-gray-500 text-sm italic">Chưa có dữ liệu.</p>
+    // ) : (
+    //     <>
+    //         <div className="grid grid-cols-3 gap-6 pb-4 place-items-center mx-auto">
+    //             {users.map((user) => (
+    //                 <div
+    //                     key={user.id}
+    //                     className="w-36 h-52 rounded-2xl overflow-hidden shadow-md relative"
+    //                 >
+    //                     <img
+    //                         src={buildImageUrl(user.avatar_url)}
+    //                         alt={user.username}
+    //                         className="w-full h-full object-cover"
+    //                         style={{
+    //                             filter: canViewPhotos
+    //                                 ? "none"
+    //                                 : "blur(12px) brightness(0.8)",
+    //                         }}
+    //                         onClick={() => {
+    //                             if (!canViewPhotos) return;
+
+    //                             const formattedUser = {
+    //                                 ...user,
+    //                                 images: user.images?.length
+    //                                     ? user.images.map((img: any) => ({
+    //                                           url: buildImageUrl(img.url),
+    //                                       }))
+    //                                     : [{ url: buildImageUrl(user.avatar_url) }],
+    //                             };
+
+    //                             setSelectedUser(formattedUser);
+    //                             setShowSwipePopup(true);
+    //                         }}
+    //                     />
+    //                 </div>
+    //             ))}
+    //         </div>
+
+    //         {hasMore && title === "Những người đã thích bạn" && (
+    //             <button
+    //                 className="mt-4 text-sm text-yellow-500 hover:underline"
+    //                 onClick={() => {
+    //                     const nextPage = page + 1;
+    //                     setPage(nextPage);
+    //                     fetchLikedMe(nextPage);
+    //                 }}
+    //             >
+    //                 Xem thêm
+    //             </button>
+    //         )}
+    //     </>
+    // )}
+
+    //         </div>
+    //     );
 
     const UserGrid = ({
         title,
         users,
-        canViewPhotos
+        canViewPhotos,
+        hasMore,
+        onLoadMore,
     }: {
         title: string;
         users: any[];
         canViewPhotos: boolean;
+        hasMore?: boolean;
+        onLoadMore?: () => void;
     }) => (
         <div className="w-full mb-10 flex flex-col items-center">
             <p className="text-base font-semibold mb-4 text-gray-800">{title}</p>
@@ -69,45 +281,81 @@ const Upgrade: React.FC = () => {
             {loading ? (
                 <p className="text-gray-500">Đang tải...</p>
             ) : users.length === 0 ? (
-                <p className="text-gray-500 text-sm italic">Chưa có dữ liệu.</p>
+                <p className="text-gray-500 text-sm italic">Bạn chưa có ai khác thích mình.</p>
             ) : (
-                <div className="grid grid-cols-3 gap-6 pb-4 place-items-center mx-auto">
-                    {users.map((user) => (
-                        <div
-                            key={user.id}
-                            className="w-36 h-52 rounded-2xl overflow-hidden shadow-md relative"
+                <>
+                    <div className="grid grid-cols-3 gap-6 pb-4 place-items-center mx-auto">
+                        {users.map(user => (
+                            <div
+                                key={user.id}
+                                className="w-36 h-52 rounded-2xl overflow-hidden shadow-md relative"
+                            >
+                                <img
+                                    src={buildImageUrl(user.avatar_url)}
+                                    alt={user.username}
+                                    className="w-full h-full object-cover"
+                                    style={{
+                                        filter: canViewPhotos
+                                            ? "none"
+                                            : "blur(12px) brightness(0.8)",
+                                    }}
+                                    // onClick={() => {
+                                    //     if (!canViewPhotos) return;
+
+                                    //     setSelectedUser({
+                                    //         ...user,
+                                    //         images: user.images?.length
+                                    //             ? user.images.map((img: any) => ({
+                                    //                 url: buildImageUrl(img.url),
+                                    //             }))
+                                    //             : [{ url: buildImageUrl(user.avatar_url) }],
+                                    //     });
+                                    //     setShowSwipePopup(true);
+                                    // }}
+                                    onClick={() => {
+                                        if (!canViewPhotos) return;
+
+                                        // 1️⃣ Build avatar
+                                        const avatarImage = user.avatar_url
+                                            ? [{ url: buildImageUrl(user.avatar_url) }]
+                                            : [];
+
+                                        // 2️⃣ Build ảnh profile (loại ảnh trùng avatar nếu có)
+                                        const profileImages =
+                                            user.images?.length
+                                                ? user.images
+                                                    .filter((img: any) => img.url !== user.avatar_url)
+                                                    .map((img: any) => ({
+                                                        url: buildImageUrl(img.url),
+                                                    }))
+                                                : [];
+
+                                        // 3️⃣ Gộp: avatar đứng đầu
+                                        setSelectedUser({
+                                            ...user,
+                                            images: [...avatarImage, ...profileImages],
+                                        });
+
+                                        setShowSwipePopup(true);
+                                    }}
+
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    {hasMore && onLoadMore && (
+                        <button
+                            className="mt-4 text-sm text-yellow-500 hover:underline"
+                            onClick={onLoadMore}
                         >
-                            <img
-                                src={buildImageUrl(user.avatar_url)}
-                                alt={user.username}
-                                className="w-full h-full object-cover"
-                                style={{
-                                    filter: canViewPhotos ? "none" : "blur(12px) brightness(0.8)",
-                                }}
-                                onClick={() => {
-                                    if (!canViewPhotos) return;
-
-                                    const formattedUser = {
-                                        ...user,
-                                        images: user.images?.length
-                                            ? user.images.map((img: any) => ({
-                                                url: buildImageUrl(img.url),
-                                            }))
-                                            : [{ url: buildImageUrl(user.avatar_url) }],
-                                    };
-
-                                    setSelectedUser(formattedUser);
-                                    setShowSwipePopup(true);
-                                }}
-                            />
-
-                        </div>
-                    ))}
-                </div>
+                            Xem thêm
+                        </button>
+                    )}
+                </>
             )}
         </div>
     );
-
 
 
     return (
@@ -150,14 +398,37 @@ const Upgrade: React.FC = () => {
                     </div>
 
                     {/* 🖼️ Danh sách người thích mình */}
-                    <UserGrid title="Những người đã thích bạn" users={likedUsers} canViewPhotos={canViewPhotos} />
+                    {/* <UserGrid title="Những người đã thích bạn" users={likedUsers} canViewPhotos={canViewPhotos} /> */}
+                    <UserGrid
+                        title="Những người đã thích bạn"
+                        users={likedUsers}
+                        canViewPhotos={canViewPhotos}
+                        // showLoadMore
+                        hasMore={hasMore}
+                        onLoadMore={() => {
+                            const nextPage = page + 1;
+                            setPage(nextPage);
+                            fetchLikedMe(nextPage);
+                        }}
+                    />
+
 
                     {/* 🧭 Danh sách người ở gần bạn */}
                     <UserGrid title="Người ở gần bạn" users={nearbyUsers} canViewPhotos={canViewPhotos} />
 
                     {/* 💫 Danh sách cùng mục tiêu hẹn hò */}
-                    <UserGrid title="Cùng mục tiêu hẹn hò" users={goalUsers} canViewPhotos={canViewPhotos} />
-
+                    {/* <UserGrid title="Cùng mục tiêu hẹn hò" users={goalUsers} canViewPhotos={canViewPhotos} /> */}
+                    <UserGrid
+                        title="Cùng mục tiêu hẹn hò"
+                        users={goalUsers}
+                        canViewPhotos={canViewPhotos}
+                        hasMore={goalHasMore}
+                        onLoadMore={() => {
+                            const next = goalPage + 1;
+                            setGoalPage(next);
+                            fetchGoalUsers(next);
+                        }}
+                    />
                     <div />
                 </div>
             </main>

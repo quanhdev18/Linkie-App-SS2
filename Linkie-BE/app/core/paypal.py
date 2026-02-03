@@ -3,7 +3,6 @@ import os
 from paypalcheckoutsdk.core import PayPalHttpClient, SandboxEnvironment
 from paypalcheckoutsdk.orders import OrdersCreateRequest, OrdersCaptureRequest
 
-# Config (bạn có thể lấy từ settings hoặc env)
 CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "your-client-id")
 CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "your-client-secret")
 

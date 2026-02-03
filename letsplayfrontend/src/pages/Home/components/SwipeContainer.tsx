@@ -1006,9 +1006,488 @@
 
 
 
+// import React, { useEffect, useState, useRef, useCallback } from "react";
+// import { Star, X, Check } from "lucide-react";
+// import { getProfiles, likeUser, getLikedUsers, getLocationByAccountId, getLocationName, getRecommendations, baseURL, } from "@/services/api";
+// import { HOBBY_OPTIONS } from "@/constants/hobbyOptions";
+
+// interface SwipeContainerProps {
+//   filters: any;
+//   onLoaded?: () => void;
+//   singleProfile?: any;
+//   onLikedUser?: (id: number) => void;
+// }
+
+// interface Profile {
+//   account_id: number;
+//   username: string;
+//   date_of_birth: string;
+//   gender?: string;
+//   bio?: string;
+//   images: { url: string }[];
+// }
+
+
+// const ANIMATION_DURATION = 400;
+
+// const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters, onLoaded, singleProfile, onLikedUser, }) => {
+//   const [accountId, setAccountId] = useState<number | null>(null);
+//   const [profiles, setProfiles] = useState<Profile[]>([]);
+//   const [locationNames, setLocationNames] = useState<Record<number, string>>({});
+//   const [status, setStatus] = useState<"loading" | "error" | "empty" | "success">("loading");
+//   const [currentIndex, setCurrentIndex] = useState(0);
+//   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | "none">("none");
+//   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+//   const fetchAllData = useCallback(async () => {
+//     if (singleProfile) {
+//       setProfiles([singleProfile]);
+//       setStatus("success");
+//       return;
+//     }
+
+//     setStatus("loading");
+
+//     try {
+//       const storedAccountId = localStorage.getItem("account_id");
+//       if (!storedAccountId) throw new Error("User not logged in");
+
+//       const parsedId = parseInt(storedAccountId);
+//       setAccountId(parsedId);
+
+//       // ✅ 1️⃣ LẤY RECOMMENDATIONS
+//       const recommendations = await getRecommendations({
+//         userId: parsedId,
+//         page: 1,
+//         pageSize: 50,
+//         minScore: 20,
+//       });
+
+//       if (!recommendations || recommendations.length === 0) {
+//         setProfiles([]);
+//         setStatus("empty");
+//         return;
+//       }
+
+//       let filtered = [...recommendations];
+
+//       // ✅ 2️⃣ FILTER FRONTEND (GIỐNG MOBILE)
+//       if (filters) {
+//         filtered = filtered.filter((user: any) => {
+//           const age =
+//             user.age ??
+//             (user.date_of_birth
+//               ? new Date().getFullYear() -
+//               new Date(user.date_of_birth).getFullYear()
+//               : null);
+
+//           const ageMatch =
+//             (!filters.minAge || age >= filters.minAge) &&
+//             (!filters.maxAge || age <= filters.maxAge);
+
+//           const genderMatch =
+//             !filters.gender ||
+//             filters.gender.length === 0 ||
+//             filters.gender.includes(user.gender);
+
+//           const orientationMatch =
+//             !filters.orientation ||
+//             filters.orientation.length === 0 ||
+//             filters.orientation.includes(user.orientation);
+
+//           const relationshipMatch =
+//             !filters.relationship ||
+//             filters.relationship.length === 0 ||
+//             filters.relationship.includes(user.target_type);
+
+//           return (
+//             ageMatch &&
+//             genderMatch &&
+//             orientationMatch &&
+//             relationshipMatch
+//           );
+//         });
+//       }
+
+//       if (filtered.length === 0) {
+//         setProfiles([]);
+//         setStatus("empty");
+//         return;
+//       }
+//       // const normalizeUrl = (url: string) =>
+//       //   url?.startsWith("http")
+//       //     ? url
+//       //     : `${import.meta.env.VITE_API_BASE_URL}/${url.replace(/\\/g, "/")}`;
+
+//       // const normalized = filtered.map((user: any) => {
+//       //   const rawImages =
+//       //     user.profile?.images ||
+//       //     user.images ||
+//       //     [];
+
+//       //   const images = rawImages.map((img: any) => ({
+//       //     ...img,
+//       //     url: normalizeUrl(img.url),
+//       //   }));
+
+//       //   return {
+//       //     ...user,
+//       //     images,
+//       //   };
+//       // });
+//       // Tìm đến đoạn này trong SwipeContainer.tsx và thay thế:
+
+//       const buildFullUrl = (path: string) => {
+//         if (!path) return "/images/default-avatar.png"; // Đường dẫn ảnh mặc định của bạn
+//         if (path.startsWith("http")) return path;
+
+
+//         const cleanPath = path.replace(/\\/g, "/");
+
+//         if (cleanPath.includes("static/")) {
+//           const startIndex = cleanPath.indexOf("static/");
+//           return `${baseURL}/${cleanPath.substring(startIndex)}`;
+//         }
+
+//         return `${baseURL}/static/images/profile/${cleanPath}`;
+//       };
+
+//       // Sau đó trong phần map dữ liệu:
+//       const normalized = filtered.map((user: any) => {
+//         // Ưu tiên lấy danh sách images, nếu không có thì lấy avatar làm ảnh duy nhất
+//         let rawImages = user.images || (user.profile && user.profile.images) || [];
+
+//         // Nếu mảng images trống nhưng có trường avatar/avatar_url, hãy tạo 1 item cho nó
+//         if (rawImages.length === 0 && (user.avatar || user.avatar_url)) {
+//           rawImages = [{ url: user.avatar || user.avatar_url }];
+//         }
+
+//         const images = rawImages.map((img: any) => ({
+//           ...img,
+//           url: buildFullUrl(img.url),
+//         }));
+
+//         return {
+//           ...user,
+//           images,
+//         };
+//       });
+
+
+
+//       // ✅ 3️⃣ LOCATION NAME (recommendations trả sẵn)
+//       const newLocationNames: Record<number, string> = {};
+//       filtered.forEach((user: any) => {
+//         newLocationNames[user.account_id] =
+//           user.location_name || "Không rõ vị trí";
+//       });
+
+//       setLocationNames(newLocationNames);
+//       // setProfiles(filtered);
+//       setProfiles(normalized);
+
+//       setStatus("success");
+//       onLoaded?.();
+//     } catch (err) {
+//       console.error("Fetch error:", err);
+//       setStatus("error");
+//     }
+//   }, [filters, singleProfile]);
+
+
+
+
+
+//   useEffect(() => {
+//     fetchAllData();
+//   }, [fetchAllData]);
+
+//   // --- XỬ LÝ SWIPE ---
+//   const triggerSwipe = (direction: "left" | "right") => {
+//     setSwipeDirection(direction);
+//     setTimeout(async () => {
+//       if (direction === "right") {
+//         const likedUser = profiles[currentIndex];
+//         if (likedUser && accountId) {
+//           await likeUser(likedUser.account_id, accountId);
+//         }
+//         if (onLikedUser) onLikedUser(likedUser.account_id);
+//       }
+//       if (singleProfile) return;
+
+//       setCurrentIndex((prev) => (prev + 1) % profiles.length);
+//       setSwipeDirection("none");
+//       scrollContainerRef.current?.scrollTo(0, 0);
+//     }, ANIMATION_DURATION);
+//   };
+
+//   if (status === "loading")
+//     return (
+//       <div className="flex flex-col justify-center items-center h-screen">
+//         <img
+//           src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExcGQxZnZubG85cjV2bHNrdDk4bWEyYXd2ejQzdDgyZDdremFjcXB0biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/qutWTSucYBUOcVtD3N/giphy.gif"
+//           alt="loading"
+//           className="w-40 h-40 object-contain"
+//         />
+//         <p className="mt-4 text-gray-500 text-lg font-medium">
+//           Hãy cùng gặp bạn mới ngay nào &gt;&lt;
+//         </p>
+//       </div>
+//     );
+
+//   if (status === "error")
+//     return (
+//       <div className="flex flex-col items-center justify-center h-screen text-gray-500">
+//         <p className="text-lg mb-3">Không thể tải dữ liệu 😢</p>
+//         <button
+//           onClick={fetchAllData}
+//           className="mt-2 bg-yellow-400 text-white px-5 py-2 rounded-lg hover:bg-yellow-500 transition"
+//         >
+//           Thử lại
+//         </button>
+//       </div>
+//     );
+
+//   if (status === "empty")
+//     return (
+//       <div className="flex flex-col items-center justify-center h-screen text-gray-400 text-lg">
+//         <p>Không có hồ sơ phù hợp 😅</p>
+//       </div>
+//     );
+
+//   const currentProfile = profiles[currentIndex % profiles.length];
+//   // const age = new Date().getFullYear() - new Date(currentProfile.date_of_birth).getFullYear();
+//   const age =
+//     currentProfile.age ??
+//     (currentProfile.date_of_birth
+//       ? new Date().getFullYear() -
+//       new Date(currentProfile.date_of_birth).getFullYear()
+//       : "—");
+
+//   const location = locationNames[currentProfile.account_id] || "Không rõ vị trí";
+
+//   return (
+//     // <div className="flex h-screen bg-white items-center justify-center pb-14">
+//     // <div className="flex h-full w-full bg-white items-center justify-center pb-14 overflow-hidden">
+//     // <div className="flex h-full w-full bg-white items-center justify-center px-4 sm:px-6 md:px-10 lg:px-14 pb-14">
+//     // <div className="flex h-screen w-screen bg-white items-center justify-center overflow-hidden px-4">
+//     // <div className="flex h-screen w-full items-center justify-center px-4">
+//     <div className="flex w-full items-center justify-center px-4 py-6 pt-20">
+
+
+
+
+//       {/* <div className="relative w-full max-w-[1100px] h-[800px] bg-white rounded-2xl shadow-lg"> */}
+//       {/* <div className="relative w-full max-w-[1100px] aspect-[3/4] h-[730px] bg-white rounded-2xl shadow-lg overflow-hidden" style={{ marginTop: '80px' }}> */}
+//       {/* <div
+//         className="
+//           relative 
+//           w-full 
+//           max-w-[1100px] 
+//           aspect-[3/4]
+//           max-h-[730px]
+//           bg-white 
+//           rounded-2xl 
+//           shadow-lg 
+//           overflow-hidden
+//           mt-20
+//         "
+//       > */}
+//       {/* <div
+//   className="
+//     relative
+//     w-full
+//     max-w-[1100px]
+//     h-full
+//     max-h-[calc(100vh-120px)]
+//     bg-white
+//     rounded-2xl
+//     shadow-lg
+//     overflow-hidden
+//   "
+// > */}
+//       <div className="relative w-full max-w-[960px] h-[620px] bg-white rounded-2xl shadow-lg overflow-hidden">
+
+
+
+//         <div
+//           className={`relative w-full h-full rounded-2xl overflow-hidden transition-transform ${swipeDirection === "left" ? "animate-swipe-out-left" : ""
+//             } ${swipeDirection === "right" ? "animate-swipe-out-right" : ""}`}
+//         >
+//           {/* <div ref={scrollContainerRef} className="w-full h-full overflow-y-auto no-scrollbar snap-y snap-mandatory"> */}
+//           {/* <div
+//   ref={scrollContainerRef}
+//   className="absolute inset-0 overflow-y-auto no-scrollbar snap-y snap-mandatory"
+// > */}
+//           {/* <div
+//   ref={scrollContainerRef}
+//   className="w-full h-full overflow-y-auto no-scrollbar snap-y snap-mandatory"
+// > */}
+//           <div
+//             ref={scrollContainerRef}
+//             className="w-full h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar"
+//           >
+
+//             {/* Slide 1: Ảnh + Thông tin cơ bản */}
+//             {/* <div className="w-full max-h-[730px] snap-start grid grid-cols-2"> */}
+//             {/* <div className="w-full h-full snap-start grid grid-cols-2"> */}
+//             <div className="w-full h-[620px] snap-start grid grid-cols-2">
+
+//               {/* <div
+//                 // className="w-full aspect-[3/4] rounded-l-2xl bg-gray-100 bg-center bg-cover"
+//                 className="w-full h-full rounded-l-2xl bg-gray-100 bg-center bg-cover"
+//                 style={{
+//                   backgroundImage: `url(${currentProfile.images?.[0]?.url || "/images/default-avatar.png"})`,
+//                 }}
+//               ></div> */}
+//               <div className="w-full h-full rounded-l-2xl overflow-hidden bg-black">
+//                 <img
+//                   src={currentProfile.images?.[0]?.url || "/images/default-avatar.png"}
+//                   className="w-full h-full object-cover"
+//                 />
+//               </div>
+
+
+
+//               <div className="flex flex-col justify-center items-start bg-[#fff9e6] px-12 items-center">
+//                 <h2 className="text-4xl font-bold text-gray-800">
+//                   {currentProfile.username}{age !== "—" && `, ${age}`}
+//                 </h2>
+//                 <p className="text-lg text-gray-600 mt-2">📍 {location}</p>
+//               </div>
+//             </div>
+
+
+//             {/* Slide 2: Bio & Sở thích */}
+//             <div className="w-full h-full snap-start grid grid-cols-2">
+//               <div className="flex flex-col justify-center items-center bg-[#fff9e6] px-8">
+//                 <h3 className="font-semibold text-gray-800 text-xl mb-4">
+//                   Bio của {currentProfile.username}
+//                 </h3>
+//                 <p className="text-gray-700 text-center text-lg max-w-xl">
+//                   {currentProfile.bio || "Chưa có mô tả."}
+//                 </p>
+//                 {currentProfile.hobbies && (
+//                   <div className="flex flex-wrap justify-center gap-2 mt-6">
+//                     {currentProfile.hobbies.map((hobby: string, i: number) => (
+//                       <span
+//                         key={i}
+//                         className="bg-yellow-200 text-gray-800 px-3 py-1 rounded-full text-sm"
+//                       >
+//                         {HOBBY_OPTIONS[hobby] ?? hobby}
+//                       </span>
+//                     ))}
+//                   </div>
+//                 )}
+//               </div>
+
+//               <div className="flex items-center justify-center bg-black rounded-r-2xl">
+//                 {/* <div className="aspect-[3/4] w-full bg-gray-100 overflow-hidden flex items-center justify-center"> */}
+//                 <div className="relative w-full h-[620px] overflow-hidden">
+//                   <img
+//                     src={currentProfile.images?.[1]?.url || currentProfile.images?.[0]?.url || "/images/default-avatar.png"}
+//                     alt="bio"
+//                     // className="w-full h-full object-cover object-center"
+//                     // className="absolute inset-0 w-full h-full object-cover"
+//                     className="w-full h-full object-cover"
+//                   />
+//                 </div>
+//               </div>
+//             </div>
+
+
+//             {/* Slide 3: Mục đích hẹn hò */}
+//             <div className="w-full h-full snap-start grid grid-cols-2">
+//               <div className="flex items-center justify-center bg-black rounded-l-2xl">
+//                 <div className="aspect-[3/4] w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+//                   <img
+//                     src={currentProfile.images?.[2]?.url || currentProfile.images?.[0]?.url || "/images/default-avatar.png"}
+//                     alt="relationship goal"
+//                     className="w-full h-full object-cover object-center"
+//                   />
+//                 </div>
+//               </div>
+
+//               <div className="flex flex-col justify-center items-center bg-[#fff9e6] px-10">
+//                 <h3 className="text-lg text-gray-700 mb-2">Mục đích hẹn hò</h3>
+//                 <p className="text-2xl font-semibold text-gray-800 text-center">
+//                   {currentProfile.target_type || "Chưa chia sẻ"}
+//                 </p>
+//               </div>
+//             </div>
+
+
+//             {/* Các ảnh còn lại */}
+//             {currentProfile.images?.slice(3).map((image, i) => (
+//               <div key={i} className="w-full h-full snap-start grid grid-cols-2">
+//                 <div className="flex items-center justify-center bg-black rounded-l-2xl">
+//                   <div className="aspect-[3/4] w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+//                     <img
+//                       src={image.url}
+//                       alt={`Ảnh ${i + 4}`}
+//                       className="w-full h-full object-cover object-center"
+//                     />
+//                   </div>
+//                 </div>
+//                 <div className="flex flex-col justify-center items-center bg-[#fff9e6]">
+//                   <p className="text-gray-700 italic">
+//                     Ảnh {i + 4} của {currentProfile.username}
+//                   </p>
+//                 </div>
+//               </div>
+//             ))}
+
+//           </div>
+
+//         </div>
+
+//         {/* Nút hành động */}
+//         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center justify-center gap-8 z-10">
+//           <button
+//             onClick={() => triggerSwipe("left")}
+//             disabled={swipeDirection !== "none"}
+//             className="bg-white rounded-full p-4 shadow-lg hover:scale-110 transition active:scale-95 disabled:opacity-50"
+//           >
+//             <X size={24} className="text-gray-600" />
+//           </button>
+//           <button
+//             onClick={() => triggerSwipe("right")}
+//             disabled={swipeDirection !== "none"}
+//             className="bg-white rounded-full p-4 shadow-lg hover:scale-110 transition active:scale-95 disabled:opacity-50"
+//           >
+//             <Check size={24} className="text-green-500" />
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default SwipeContainer;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Star, X, Check } from "lucide-react";
-import { getProfiles, likeUser, getLikedUsers, getLocationByAccountId, getLocationName } from "@/services/api";
+import { likeUser, getAiRecommendations, baseURL, getAllImagesByAccountId } from "@/services/api";
+import { HOBBY_OPTIONS } from "@/constants/hobbyOptions";
 
 interface SwipeContainerProps {
   filters: any;
@@ -1024,6 +1503,7 @@ interface Profile {
   gender?: string;
   bio?: string;
   images: { url: string }[];
+  hobbies?: string[];
 }
 
 
@@ -1044,80 +1524,223 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters, onLoaded, sing
       setStatus("success");
       return;
     }
+
     setStatus("loading");
 
     try {
       const storedAccountId = localStorage.getItem("account_id");
       if (!storedAccountId) throw new Error("User not logged in");
+
       const parsedId = parseInt(storedAccountId);
       setAccountId(parsedId);
 
-      const [allProfiles, likedUsers] = await Promise.all([
-        getProfiles(),
-        getLikedUsers(parsedId),
-      ]);
+      // ✅ 1️⃣ LẤY RECOMMENDATIONS
+      const recommendations = await getAiRecommendations(parsedId);
 
-      const likedIds = new Set(likedUsers.map((item: any) => item.liked_id));
 
-      let filtered = allProfiles.filter(
-        (p: any) => p.account_id !== parsedId && !likedIds.has(p.account_id)
-      );
+      if (!recommendations || recommendations.length === 0) {
+        setProfiles([]);
+        setStatus("empty");
+        return;
+      }
 
-      // Áp dụng filters như trước
-      const shouldApplyFilter = !!filters && (
-        (typeof filters.minAge !== "undefined" && filters.minAge !== null) ||
-        (typeof filters.maxAge !== "undefined" && filters.maxAge !== null) ||
-        (Array.isArray(filters.gender) && filters.gender.length > 0) ||
-        (Array.isArray(filters.orientation) && filters.orientation.length > 0) ||
-        (Array.isArray(filters.relationship) && filters.relationship.length > 0)
-      );
+      let filtered = [...recommendations];
 
-      if (shouldApplyFilter) {
+      // ✅ 2️⃣ FILTER FRONTEND (GIỐNG MOBILE)
+      if (filters) {
         filtered = filtered.filter((user: any) => {
-          const age = new Date().getFullYear() - new Date(user.date_of_birth).getFullYear();
+          const age =
+            user.age ??
+            (user.date_of_birth
+              ? new Date().getFullYear() -
+              new Date(user.date_of_birth).getFullYear()
+              : null);
 
-          let ageMatch = true;
-          if (typeof filters.minAge !== "undefined") ageMatch = age >= filters.minAge;
-          if (typeof filters.maxAge !== "undefined") ageMatch = ageMatch && age <= filters.maxAge;
+          const ageMatch =
+            (!filters.minAge || age >= filters.minAge) &&
+            (!filters.maxAge || age <= filters.maxAge);
 
-          let genderMatch = true;
-          if (filters.gender && filters.gender.length > 0) genderMatch = filters.gender.includes(user.gender);
+          const genderMatch =
+            !filters.gender ||
+            filters.gender.length === 0 ||
+            filters.gender.includes(user.gender);
 
-          let orientationMatch = true;
-          if (Array.isArray(filters.orientation) && filters.orientation.length > 0) {
-            orientationMatch = filters.orientation.includes(user.orientation);
-          }
+          const orientationMatch =
+            !filters.orientation ||
+            filters.orientation.length === 0 ||
+            filters.orientation.includes(user.orientation);
 
-          let relationshipMatch = true;
-          if (Array.isArray(filters.relationship) && filters.relationship.length > 0) {
-            relationshipMatch = filters.relationship.includes(user.target_type);
-          }
+          const relationshipMatch =
+            !filters.relationship ||
+            filters.relationship.length === 0 ||
+            filters.relationship.includes(user.target_type);
 
-          return ageMatch && genderMatch && orientationMatch && relationshipMatch;
+          return (
+            ageMatch &&
+            genderMatch &&
+            orientationMatch &&
+            relationshipMatch
+          );
         });
       }
 
       if (filtered.length === 0) {
-        setStatus("empty");
         setProfiles([]);
+        setStatus("empty");
         return;
       }
+      const buildFullUrl = (path: string) => {
+        if (!path) return "/images/default-avatar.png";
+        if (path.startsWith("http")) return path;
+        return `${baseURL}/${path.replace(/\\/g, "/")}`;
+      };
 
+
+      // const buildFullUrl = (path: string) => {
+      //   if (!path) return "/images/default-avatar.png"; // Đường dẫn ảnh mặc định của bạn
+      //   if (path.startsWith("http")) return path;
+
+
+      //   const cleanPath = path.replace(/\\/g, "/");
+
+      //   if (cleanPath.includes("static/")) {
+      //     const startIndex = cleanPath.indexOf("static/");
+      //     return `${baseURL}/${cleanPath.substring(startIndex)}`;
+      //   }
+
+      //   return `${baseURL}/static/images/profile/${cleanPath}`;
+      // };
+
+      // Sau đó trong phần map dữ liệu:
+      // const normalized = filtered.map((user: any) => {
+      //   let rawImages = user.images || [];
+
+      //   if (rawImages.length === 0 && (user.avatar || user.avatar_url)) {
+      //     rawImages = [{ url: user.avatar || user.avatar_url }];
+      //   }
+
+      //   const images = rawImages.map((img: any) => ({
+      //     ...img,
+      //     url: buildFullUrl(img.url),
+      //   }));
+
+      //   return {
+      //     ...user,
+      //     account_id: user.id, // ✅ QUAN TRỌNG
+      //     location_name: user.location_name || "Không rõ vị trí",
+      //     images,
+      //     hobbies: user.hobby || user.hobbies || [],
+
+      //   };
+      // });
+      // const normalized = await Promise.all(
+      //   filtered.map(async (user: any) => {
+      //     let images: { url: string }[] = [];
+
+      //     try {
+      //       // 🔥 GỌI API MỚI
+      //       const imageData = await getAllImagesByAccountId(user.id);
+
+
+      //       // 1️⃣ Avatar → ảnh đầu
+      //       if (imageData.avatar?.url) {
+      //         images.push({
+      //           url: buildFullUrl(imageData.avatar.url),
+      //         });
+      //       }
+
+      //       // 2️⃣ Profile images → ảnh sau
+      //       if (imageData.profile_images?.length) {
+      //         imageData.profile_images.forEach((img: any) => {
+      //           images.push({
+      //             url: buildFullUrl(img.url),
+      //           });
+      //         });
+      //       }
+      //     } catch (err) {
+      //       console.warn("Không load được ảnh cho profile:", user.profile_id);
+      //     }
+
+      //     // fallback nếu không có ảnh nào
+      //     if (images.length === 0) {
+      //       images.push({ url: "/images/default-avatar.png" });
+      //     }
+
+      //     return {
+      //       ...user,
+      //       account_id: user.id,
+      //       images, // ✅ QUAN TRỌNG
+      //       hobbies: user.hobby || [],
+      //       location_name: user.location_name || "Không rõ vị trí",
+      //     };
+      //   })
+      // );
+      const normalized = await Promise.all(
+  filtered.map(async (user: any) => {
+    let images: { url: string }[] = [];
+
+    try {
+      // 🔥 GỌI API THEO ACCOUNT ID
+      const imageData = await getAllImagesByAccountId(user.id);
+
+      // 1️⃣ Avatar → ảnh đầu
+      if (imageData.avatar?.url) {
+        images.push({
+          url: buildFullUrl(imageData.avatar.url),
+        });
+      }
+
+      // 2️⃣ Profile images → ảnh sau
+      if (imageData.profile_images?.length) {
+        imageData.profile_images.forEach((img: any) => {
+          images.push({
+            url: buildFullUrl(img.url),
+          });
+        });
+      }
+    } catch (err) {
+      console.warn("Không load được ảnh cho account:", user.id);
+    }
+
+    // fallback nếu không có ảnh
+    if (images.length === 0) {
+      images.push({ url: "/images/default-avatar.png" });
+    }
+
+    return {
+      ...user,
+      account_id: user.id, // ✅ RÕ RÀNG
+      images,
+      hobbies: user.hobby || [],
+      location_name: user.location_name || "Không rõ vị trí",
+    };
+  })
+);
+
+
+
+
+
+
+      // ✅ 3️⃣ LOCATION NAME (recommendations trả sẵn)
       const newLocationNames: Record<number, string> = {};
       filtered.forEach((user: any) => {
-        newLocationNames[user.account_id] = user.location_name || "Không rõ vị trí";
+        newLocationNames[user.account_id] =
+          user.location_name || "Không rõ vị trí";
       });
 
       setLocationNames(newLocationNames);
-      setProfiles(filtered);
-      setStatus("success");
+      // setProfiles(filtered);
+      setProfiles(normalized);
 
-      onLoaded && onLoaded();
+      setStatus("success");
+      onLoaded?.();
     } catch (err) {
       console.error("Fetch error:", err);
       setStatus("error");
     }
   }, [filters, singleProfile]);
+
 
 
 
@@ -1180,17 +1803,30 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters, onLoaded, sing
     );
 
   const currentProfile = profiles[currentIndex % profiles.length];
-  const age = new Date().getFullYear() - new Date(currentProfile.date_of_birth).getFullYear();
+  // const age = new Date().getFullYear() - new Date(currentProfile.date_of_birth).getFullYear();
+  const age =
+    currentProfile.age ??
+    (currentProfile.date_of_birth
+      ? new Date().getFullYear() -
+      new Date(currentProfile.date_of_birth).getFullYear()
+      : "—");
+
   const location = locationNames[currentProfile.account_id] || "Không rõ vị trí";
 
   return (
     // <div className="flex h-screen bg-white items-center justify-center pb-14">
     // <div className="flex h-full w-full bg-white items-center justify-center pb-14 overflow-hidden">
-    <div className="flex h-full w-full bg-white items-center justify-center px-4 sm:px-6 md:px-10 lg:px-14 pb-14">
+    // <div className="flex h-full w-full bg-white items-center justify-center px-4 sm:px-6 md:px-10 lg:px-14 pb-14">
+    // <div className="flex h-screen w-screen bg-white items-center justify-center overflow-hidden px-4">
+    // <div className="flex h-screen w-full items-center justify-center px-4">
+    <div className="flex w-full items-center justify-center px-4 py-6 pt-20">
+
+
+
 
       {/* <div className="relative w-full max-w-[1100px] h-[800px] bg-white rounded-2xl shadow-lg"> */}
       {/* <div className="relative w-full max-w-[1100px] aspect-[3/4] h-[730px] bg-white rounded-2xl shadow-lg overflow-hidden" style={{ marginTop: '80px' }}> */}
-      <div
+      {/* <div
         className="
           relative 
           w-full 
@@ -1203,28 +1839,68 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters, onLoaded, sing
           overflow-hidden
           mt-20
         "
-      >
+      > */}
+      {/* <div
+  className="
+    relative
+    w-full
+    max-w-[1100px]
+    h-full
+    max-h-[calc(100vh-120px)]
+    bg-white
+    rounded-2xl
+    shadow-lg
+    overflow-hidden
+  "
+> */}
+      <div className="relative w-full max-w-[960px] h-[620px] bg-white rounded-2xl shadow-lg overflow-hidden">
+
+
 
         <div
           className={`relative w-full h-full rounded-2xl overflow-hidden transition-transform ${swipeDirection === "left" ? "animate-swipe-out-left" : ""
             } ${swipeDirection === "right" ? "animate-swipe-out-right" : ""}`}
         >
-          <div ref={scrollContainerRef} className="w-full h-full overflow-y-auto no-scrollbar snap-y snap-mandatory">
+          {/* <div ref={scrollContainerRef} className="w-full h-full overflow-y-auto no-scrollbar snap-y snap-mandatory"> */}
+          {/* <div
+  ref={scrollContainerRef}
+  className="absolute inset-0 overflow-y-auto no-scrollbar snap-y snap-mandatory"
+> */}
+          {/* <div
+  ref={scrollContainerRef}
+  className="w-full h-full overflow-y-auto no-scrollbar snap-y snap-mandatory"
+> */}
+          <div
+            ref={scrollContainerRef}
+            className="w-full h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar"
+          >
+
             {/* Slide 1: Ảnh + Thông tin cơ bản */}
-            <div className="w-full max-h-[730px] snap-start grid grid-cols-2">
-              <div
-                className="w-full aspect-[3/4] rounded-l-2xl bg-gray-100 bg-center bg-cover"
+            {/* <div className="w-full max-h-[730px] snap-start grid grid-cols-2"> */}
+            {/* <div className="w-full h-full snap-start grid grid-cols-2"> */}
+            <div className="w-full h-[620px] snap-start grid grid-cols-2">
+
+              {/* <div
+                // className="w-full aspect-[3/4] rounded-l-2xl bg-gray-100 bg-center bg-cover"
+                className="w-full h-full rounded-l-2xl bg-gray-100 bg-center bg-cover"
                 style={{
                   backgroundImage: `url(${currentProfile.images?.[0]?.url || "/images/default-avatar.png"})`,
                 }}
-              ></div>
+              ></div> */}
+              <div className="w-full h-full rounded-l-2xl overflow-hidden bg-black">
+                <img
+                  src={currentProfile.images?.[0]?.url || "/images/default-avatar.png"}
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
 
-              <div className="flex flex-col justify-center items-start bg-[#fff9e6] px-12">
+
+              <div className="flex flex-col justify-center items-start bg-[#fff9e6] px-12 items-center">
                 <h2 className="text-4xl font-bold text-gray-800">
-                  {currentProfile.username}, {age}
+                  {currentProfile.username}{age !== "—" && `, ${age}`}
                 </h2>
-                <p className="text-lg text-gray-600 mt-2">📍 {location}</p>
+                <p className="text-lg text-gray-600 mt-2">📍 {currentProfile.location_name}</p>
               </div>
             </div>
 
@@ -1245,7 +1921,7 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters, onLoaded, sing
                         key={i}
                         className="bg-yellow-200 text-gray-800 px-3 py-1 rounded-full text-sm"
                       >
-                        {hobby}
+                        {HOBBY_OPTIONS[hobby] ?? hobby}
                       </span>
                     ))}
                   </div>
@@ -1253,11 +1929,14 @@ const SwipeContainer: React.FC<SwipeContainerProps> = ({ filters, onLoaded, sing
               </div>
 
               <div className="flex items-center justify-center bg-black rounded-r-2xl">
-                <div className="aspect-[3/4] w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                {/* <div className="aspect-[3/4] w-full bg-gray-100 overflow-hidden flex items-center justify-center"> */}
+                <div className="relative w-full h-[620px] overflow-hidden">
                   <img
                     src={currentProfile.images?.[1]?.url || currentProfile.images?.[0]?.url || "/images/default-avatar.png"}
                     alt="bio"
-                    className="w-full h-full object-cover object-center"
+                    // className="w-full h-full object-cover object-center"
+                    // className="absolute inset-0 w-full h-full object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               </div>

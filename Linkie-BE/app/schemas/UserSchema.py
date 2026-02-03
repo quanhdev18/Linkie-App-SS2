@@ -51,7 +51,7 @@ class AccountWithAvatarOut(BaseModel):
     email: str
     is_activated: bool
     role: UserRole
-    avatar: Optional[AvatarOut] = None  # Có thể không có avatar
+    avatar: Optional[AvatarOut] = None  
     latitude: float
     longitude: float
     

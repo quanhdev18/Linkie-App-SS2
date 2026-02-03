@@ -1,0 +1,73 @@
+@startuml
+' Tối ưu hóa layout dọc cho báo cáo
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 40
+
+package "Web Admin Portal (ReactJS)" {
+
+    package "src (Core Application)" #LightBlue {
+        
+        package "pages (Screens)" #DeepSkyBlue {
+            [Dashboard]
+            [UserManagement]
+            [Analytics]
+            note right: Chứa giao diện các trang chính
+        }
+
+        package "_auth (Authentication Flow)" #SkyBlue {
+            [Login]
+            [Register]
+            [AuthLayout]
+        }
+
+        package "_root (Protected Routes)" #SkyBlue {
+            [MainLayout]
+            [PrivateRoutes]
+        }
+
+        package "services (API Layer)" #Gold {
+            [apiConfig]
+            [userService]
+            [authService]
+        }
+
+        package "components (UI Library)" #LightGreen {
+            [Common_UI]
+            [DataTables]
+            [Charts]
+        }
+
+        package "Infrastructure" <<Rectangle>> #White {
+            package "context" #Pink {
+                [AuthContext]
+                [AppContext]
+            }
+            package "lib" #Plum {
+                [utils]
+                [validators]
+            }
+            package "hooks" #Pink {
+                [useAuth]
+                [useFetch]
+            }
+        }
+
+        package "assets & constants" #LightGray {
+            [images]
+            [icons]
+            [constants]
+        }
+    }
+}
+
+' Thể hiện các mối quan hệ logic
+"pages (Screens)" ..> "services (API Layer)" : "Fetch Data"
+"pages (Screens)" ..> "components (UI Library)" : "Use UI"
+"services (API Layer)" ..> "lib" : "Format/Utils"
+"pages (Screens)" ..> "context" : "Global State"
+
+@enduml

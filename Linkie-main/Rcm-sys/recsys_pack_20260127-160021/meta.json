@@ -1,0 +1,14 @@
+{
+  "created_at": "2026-01-27 16:00:21",
+  "artifacts": {
+    "rcm_system": "rcm_system.joblib",
+    "lightfm_rcm": "lightfm_rcm.joblib",
+    "lightfm_user_features": "lightfm_user_features.npz",
+    "lightfm_item_features": "lightfm_item_features.npz",
+    "lightfm_train_interactions": "lightfm_train_interactions.npz",
+    "lightfm_weights": "lightfm_weights.npz",
+    "lightfm_user_ids": "lightfm_user_ids.json",
+    "extra": "extra.joblib"
+  },
+  "notes": []
+}

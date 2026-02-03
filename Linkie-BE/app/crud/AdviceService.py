@@ -2,8 +2,6 @@ from sqlalchemy.orm import Session
 from app.models.AdviceModel import VideoAdvice, TipAdvice
 from app.schemas.AdviceDTO import VideoAdviceCreate, VideoAdviceUpdate, TipAdviceCreate, TipAdviceUpdate
 
-# --- Logic cho Public API (Lấy dữ liệu active) ---
-
 def get_active_videos(db: Session) -> list[VideoAdvice]:
     """Lấy tất cả video đang active, sắp xếp mới nhất lên trước"""
     return db.query(VideoAdvice).filter(VideoAdvice.is_active == True).order_by(VideoAdvice.created_at.desc()).all()
@@ -12,9 +10,6 @@ def get_active_tips(db: Session) -> list[TipAdvice]:
     """Lấy tất cả tips đang active, sắp xếp mới nhất lên trước"""
     return db.query(TipAdvice).filter(TipAdvice.is_active == True).order_by(TipAdvice.created_at.desc()).all()
 
-# --- Logic cho Admin (CRUD) ---
-
-# CRUD cho Video
 def create_video_advice(db: Session, video: VideoAdviceCreate) -> VideoAdvice:
     db_video = VideoAdvice(**video.model_dump())
     db.add(db_video)
@@ -43,7 +38,6 @@ def delete_video_advice(db: Session, video_id: int) -> bool:
     db.commit()
     return True
 
-# CRUD cho Tip
 def create_tip_advice(db: Session, tip: TipAdviceCreate) -> TipAdvice:
     db_tip = TipAdvice(**tip.model_dump())
     db.add(db_tip)
@@ -51,4 +45,3 @@ def create_tip_advice(db: Session, tip: TipAdviceCreate) -> TipAdvice:
     db.refresh(db_tip)
     return db_tip
     
-# (Bạn có thể tự viết hàm update_tip và delete_tip tương tự như video)

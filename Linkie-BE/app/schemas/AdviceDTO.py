@@ -2,8 +2,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
-# --- Schemas cho Video Advice ---
-
 class VideoAdviceBase(BaseModel):
     title: str
     author: str
@@ -28,8 +26,6 @@ class VideoAdviceOut(VideoAdviceBase):
     class Config:
         from_attributes = True
 
-# --- Schemas cho Tip Advice ---
-
 class TipAdviceBase(BaseModel):
     title: str
     body: Optional[str] = None
@@ -49,8 +45,6 @@ class TipAdviceOut(TipAdviceBase):
 
     class Config:
         from_attributes = True
-
-# --- Schema tổng hợp cho màn hình DatingAdvice ---
 
 class DatingAdviceOut(BaseModel):
     videos: List[VideoAdviceOut]

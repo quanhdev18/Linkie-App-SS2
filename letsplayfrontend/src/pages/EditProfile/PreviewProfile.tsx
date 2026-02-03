@@ -219,15 +219,38 @@ const PreviewProfile = () => {
           setLocationText(name);
         }
 
-        if (data.images && data.images.length > 0) {
-          const urls: string[] = [];
-          for (const img of data.images) {
-            const url = await getProfileImage(img.title);
-            urls.push(url);
-          }
-          setAvatar(urls[0]);
-          setOtherImages(urls.slice(1));
-        }
+        // if (data.images && data.images.length > 0) {
+        //   const urls: string[] = [];
+        //   for (const img of data.images) {
+        //     const url = await getProfileImage(img.title);
+        //     urls.push(url);
+        //   }
+        //   setAvatar(urls[0]);
+        //   setOtherImages(urls.slice(1));
+        // }
+        // 1️⃣ Avatar (ưu tiên tuyệt đối)
+// if (data.avatar?.id) {
+//   setAvatar(`/api/avatar/${data.avatar.id}`);
+// } else {
+//   setAvatar(null);
+// }
+if (data.avatar?.url) {
+  setAvatar(`http://127.0.0.1:8000/${data.avatar.url}`);
+} else {
+  setAvatar(null);
+}
+
+
+// 2️⃣ Ảnh profile (KHÔNG gồm avatar)
+if (data.images && data.images.length > 0) {
+  const urls: string[] = [];
+  for (const img of data.images) {
+    const url = await getProfileImage(img.title);
+    urls.push(url);
+  }
+  setOtherImages(urls);
+}
+
       } catch (err) {
         console.error("Lỗi tải hồ sơ xem trước:", err);
       }

@@ -1,0 +1,71 @@
+@startuml
+' Tối ưu hóa bố cục dọc cho báo cáo đồ án
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+left to right direction
+skinparam nodesep 15
+skinparam ranksep 30
+
+package "Web Admin Application (ReactJS)" {
+
+    package "src (Core Source)" #LightBlue {
+        
+        package "pages (Màn hình nghiệp vụ)" #DeepSkyBlue {
+            [Dashboard]
+            [UserManagement]
+            [ReportList]
+            [Settings]
+        }
+
+        package "routing (_auth & _root)" #SkyBlue {
+            [Login / Register]
+            [Protected Layouts]
+            [App Routes]
+        }
+
+        package "services (Tầng giao tiếp API)" #Gold {
+            [authService]
+            [userService]
+            [paymentService]
+            [axiosConfig]
+        }
+
+        package "components (Thành phần UI)" #LightGreen {
+            [Common UI Elements]
+            [Data Tables]
+            [Charts / Analytics]
+            [Modals]
+        }
+
+        package "Infrastructure & Logic" <<Rectangle>> #White {
+            package "context" #Pink {
+                [AuthContext]
+                [ThemeContext]
+            }
+            package "hooks" #Plum {
+                [useAuth]
+                [useFetchData]
+            }
+            package "lib / layouts" #LightGray {
+                [utils / validators]
+                [MainLayout]
+                [AuthLayout]
+            }
+        }
+
+        package "assets & configs" #AntiqueWhite {
+            [images / icons]
+            [tailwind.config]
+            [constants]
+        }
+    }
+}
+
+' Thể hiện các mối quan hệ logic chính
+"pages (Màn hình nghiệp vụ)" ..down..> "services (Tầng giao tiếp API)" : "Fetch Data"
+"pages (Màn hình nghiệp vụ)" ..down..> "components (Thành phần UI)" : "Render UI"
+"routing (_auth & _root)" ..right..> "pages (Màn hình nghiệp vụ)" : "Navigate"
+"services (Tầng giao tiếp API)" ..down..> "Infrastructure & Logic" : "Use Utils"
+
+@enduml

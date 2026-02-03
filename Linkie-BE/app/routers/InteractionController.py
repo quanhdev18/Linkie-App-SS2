@@ -23,7 +23,6 @@ def like_user(
         user1 = get_account_by_id(db, liker_id)
         user2 = get_account_by_id(db, liked_id)
         
-        # SỬA Ở ĐÂY: Truy cập username thông qua ".profile"
         user1_username = user1.profile.username if user1.profile else None
         user2_username = user2.profile.username if user2.profile else None
         

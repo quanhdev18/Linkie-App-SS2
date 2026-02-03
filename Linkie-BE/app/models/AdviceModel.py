@@ -6,7 +6,7 @@ class VideoAdvice(Base):
     __tablename__ = "advice_videos"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
-    author = Column(String(100), nullable=False) # 'authur' trong code FE của bạn có vẻ là lỗi chính tả
+    author = Column(String(100), nullable=False) 
     url = Column(String(500), nullable=False)
     thumbnail_url = Column(String(500), nullable=False)
     
@@ -17,7 +17,6 @@ class TipAdvice(Base):
     __tablename__ = "advice_tips"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
-    # Thêm trường 'body' để sau này admin có thể nhập nội dung chi tiết cho tip
     body = Column(Text, nullable=True) 
     
     is_active = Column(Boolean, default=True)

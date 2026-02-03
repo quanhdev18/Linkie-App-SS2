@@ -14,41 +14,6 @@ from app.schemas.LocationDTO import NearbyUserOut
 
 class LocationService:
 
-    # @staticmethod
-    # def update_location(account_id: int, latitude: float, longitude: float, db: Session):
-    #     # Truy vấn account từ database
-    #     account = db.query(Account).filter(Account.id == account_id).first()
-    #     if not account:
-    #         return None  # Không tìm thấy tài khoản
-
-    #     # Tạo điểm địa lý từ latitude và longitude
-    #     point = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
-
-    #     # Kiểm tra xem tài khoản đã có location chưa
-    #     location = db.query(Location).filter(Location.account_id == account_id).first()
-
-    #     if location:
-    #         # Cập nhật vị trí nếu đã có location
-    #         location.latitude = latitude
-    #         location.longitude = longitude
-    #         location.point = point  # Cập nhật trường point
-    #         location.last_updated = datetime.utcnow()  # Cập nhật thời gian thay đổi vị trí
-    #         db.commit()
-    #         db.refresh(location)
-    #     else:
-    #         # Tạo mới location nếu chưa có
-    #         location = Location(
-    #             latitude=latitude,
-    #             longitude=longitude,
-    #             point=point,
-    #             account_id=account_id,
-    #             last_updated=datetime.utcnow()
-    #         )
-    #         db.add(location)
-    #         db.commit()
-    #         db.refresh(location)
-
-    #     return location
     @staticmethod
     def update_location(account_id: int, latitude: float, longitude: float, db: Session):
         account = db.query(Account).filter(Account.id == account_id).first()
@@ -57,7 +22,6 @@ class LocationService:
 
         point = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
 
-        # Check existing location
         location = db.query(Location).filter(Location.account_id == account_id).first()
 
         if location:
@@ -77,8 +41,6 @@ class LocationService:
         
         location_name = LocationService.get_location_name(latitude, longitude)
 
-        # Cập nhật profile nếu có
-        # Cập nhật profile.location_name
         profile = db.query(Profile).filter(Profile.account_id == account_id).first()
         if profile:
             profile.location_name = location_name
@@ -100,7 +62,6 @@ class LocationService:
 
         current_point = ST_SetSRID(ST_MakePoint(current_location.longitude, current_location.latitude), 4326)
 
-    # Lấy danh sách tài khoản gần đó, JOIN cả avatar và location
         accounts = (
             db.query(Account)
             .join(Location)
@@ -113,7 +74,6 @@ class LocationService:
             .all()
         )
 
-    # Trả về dữ liệu đầy đủ để serialize bằng `AccountWithAvatarOut`
         results = []
         for acc in accounts:
             profile = acc.profile
@@ -123,12 +83,13 @@ class LocationService:
                 email=acc.email,
                 is_activated=acc.is_activated,
                 role=acc.role,
+                profile_id=profile.id if profile else None,
                 avatar=acc.avatar,  
                 username=profile.username if profile else None,
                 bio=profile.bio if profile else None,
                 gender=profile.gender if profile else None,
                 images=profile.images if profile else [],
-
+           
                 latitude=acc.location.latitude,
                 longitude=acc.location.longitude,
             ))
@@ -273,77 +234,6 @@ class LocationService:
                 "users": data["users"]
             })
 
-        # Sort theo số lượng user giảm dần, lấy top 10
         zones = sorted(zones, key=lambda x: x["user_count"], reverse=True)[:10]
 
         return zones
-
-    
-    # @staticmethod
-    # def get_location_name(latitude: float, longitude: float):
-    #     # 1️⃣ Tạo key cache Redis
-    #     cache_key = f"location:{latitude:.6f}:{longitude:.6f}"
-
-    #     # 2️⃣ Kiểm tra cache trong Redis
-    #     cached_value = redis_client.get(cache_key)
-    #     if cached_value:
-    #         return cached_value  # Đã có cache thì trả về luôn
-
-    #     # 3️⃣ Nếu chưa có trong cache -> gọi OpenStreetMap
-    #     geolocator = Nominatim(user_agent="Linkie", timeout=10)
-    #     try:
-    #         location = geolocator.reverse((latitude, longitude), language='vi')
-    #     except Exception as e:
-    #         print(f"[WARN] Lỗi khi gọi geocode: {e}")
-    #         return "Không rõ địa điểm"
-
-    #     if location:
-    #         address = location.raw.get("address", {})
-    #         # Ưu tiên phường/xã
-    #         ward = (
-    #             address.get("neighbourhood") or
-    #             address.get("suburb") or
-    #             address.get("quarter") or
-    #             address.get("village") or
-    #             address.get("hamlet") or
-    #             address.get("town")
-    #         )
-    #         # Quận/Huyện
-    #         district = (
-    #             address.get("city_district") or
-    #             address.get("district")
-    #         )
-    #         # Thành phố
-    #         city = (
-    #             address.get("city") or
-    #             address.get("municipality") or
-    #             address.get("state")
-    #         )
-
-    #         if ward and city:
-    #             result = f"{ward}, {city}"
-    #         elif district and city:
-    #             result = f"{district}, {city}"
-    #         elif city:
-    #             result = city
-    #         else:
-    #             result = "Không rõ địa điểm"
-    #     else:
-    #         result = "Không rõ địa điểm"
-
-    #     # 4️⃣ Lưu vào Redis (TTL 7 ngày = 604800 giây)
-    #     try:
-    #         redis_client.setex(cache_key, 604800, result)
-    #     except Exception as e:
-    #         print(f"[WARN] Lỗi khi lưu Redis: {e}")
-
-    #     return result 
-
-
-
-    
-    
-    
-    
-    
-

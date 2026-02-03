@@ -453,8 +453,8 @@ const ChatPage: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
 
-  const ZEGO_APP_ID = 1301516268;
-  const ZEGO_SERVER_SECRET = "2530e567b9e5eccc224e88114e75473f";
+  const ZEGO_APP_ID = 486747450;
+  const ZEGO_SERVER_SECRET = "cd4881f96538daae2fb3f7ecf22dfa65";
   const [showCall, setShowCall] = useState(false);
   const [callType, setCallType] = useState<"voice" | "video">("video");
   const [incomingCall, setIncomingCall] = useState<any>(null);
@@ -596,25 +596,39 @@ const ChatPage: React.FC = () => {
     return () => ws.close();
   }, [userId, toUserId]);
 
+  
+
 
   // 📤 Gửi tin nhắn
+  // const sendMessage = () => {
+  //   if (!socket || socket.readyState !== WebSocket.OPEN || !content.trim()) {
+  //     console.warn("⚠️ Socket chưa sẵn sàng hoặc nội dung rỗng");
+  //     return;
+  //   }
+
+  //   const message = {
+  //     from_user_id: userId,
+  //     to_user_id: toUserId,
+  //     content: content.trim(),
+  //     created_at: new Date().toISOString(),
+  //   };
+
+  //   socket.send(JSON.stringify(message));
+  //   setMessages((prev) => [...prev, message]);
+  //   setContent("");
+  // };
   const sendMessage = () => {
-    if (!socket || socket.readyState !== WebSocket.OPEN || !content.trim()) {
-      console.warn("⚠️ Socket chưa sẵn sàng hoặc nội dung rỗng");
-      return;
-    }
+  if (!socket || socket.readyState !== WebSocket.OPEN || !content.trim()) return;
 
-    const message = {
-      from_user_id: userId,
-      to_user_id: toUserId,
-      content: content.trim(),
-      created_at: new Date().toISOString(),
-    };
+  socket.send(JSON.stringify({
+    type: "new_message",   // 🔥 QUAN TRỌNG
+    to_user_id: toUserId,
+    content: content.trim(),
+  }));
 
-    socket.send(JSON.stringify(message));
-    setMessages((prev) => [...prev, message]);
-    setContent("");
-  };
+  setContent("");
+};
+
 
   // 🔽 Auto scroll xuống cuối
   useEffect(() => {

@@ -13,11 +13,10 @@ router = APIRouter(
 
 @router.websocket("/ws/notifications/{user_id}")
 async def websocket_notification_endpoint(websocket: WebSocket, user_id: int, db: Session = Depends(get_db)):
-    await ws_manager.connect(websocket, user_id, conn_type="notification")  # ✅ RẤT QUAN TRỌNG
+    await ws_manager.connect(websocket, user_id, conn_type="notification") 
 
     try:
         while True:
-            # Chỉ giữ kết nối mở — không cần nhận dữ liệu từ client
             await websocket.receive_text()  
 
     except WebSocketDisconnect:

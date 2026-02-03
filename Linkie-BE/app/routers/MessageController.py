@@ -13,9 +13,7 @@ router = APIRouter(
     tags=["Location"]
 )
 
-# @router.websocket("/ws/chat/{user_id}")
-# async def websocket_chat_endpoint(websocket: WebSocket, user_id: int, db: Session = Depends(get_db)):
-    # await ws_manager.connect(websocket, user_id, conn_type="chat")
+
 @router.websocket("/ws/chat")
 async def websocket_chat_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
     token = websocket.query_params.get("token")
@@ -48,7 +46,6 @@ async def websocket_chat_endpoint(websocket: WebSocket, db: Session = Depends(ge
                 await websocket.send_text(json.dumps({"error": "Invalid payload"}))
                 continue
 
-            # ================= 📞 CALL SIGNAL =================
             if msg_type in ["CALL_INVITE", "CALL_ACCEPT", "CALL_REJECT", "CALL_END"]:
                 await ws_manager.send_to(
                     to_user_id,
@@ -59,16 +56,13 @@ async def websocket_chat_endpoint(websocket: WebSocket, db: Session = Depends(ge
                     })
                 )
                 continue
-            # ==================================================
 
-            # ================= 💬 CHAT MESSAGE =================
             if msg_type == "new_message":
                 content = payload.get("content")
                 if not content:
                     await websocket.send_text(json.dumps({"error": "Missing content"}))
                     continue
 
-                # kiểm duyệt
                 is_clean, reason = await moderate_text(content)
                 if not is_clean:
                     await websocket.send_text(json.dumps({
@@ -77,7 +71,6 @@ async def websocket_chat_endpoint(websocket: WebSocket, db: Session = Depends(ge
                     }))
                     continue
 
-                # lưu DB
                 new_message = Message(
                     from_user_id=user_id,
                     to_user_id=to_user_id,
@@ -108,7 +101,7 @@ async def websocket_notification_endpoint(websocket: WebSocket, user_id: int, db
 
     try:
         while True:
-            await websocket.receive_text()  # hoặc dùng await asyncio.sleep(10)
+            await websocket.receive_text()  
 
     except WebSocketDisconnect:
         ws_manager.disconnect(user_id, "notification")

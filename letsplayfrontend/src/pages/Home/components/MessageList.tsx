@@ -288,14 +288,14 @@ import {
 } from "../../../services/api";
 
 const EmptyChatIcon = () => (
-  <svg 
-    className="w-15 h-20 mb-4 text-yellow-500 opacity-70" 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
+  <svg
+    className="w-15 h-20 mb-4 text-yellow-500 opacity-70"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
     strokeWidth="1.5"
-    strokeLinecap="round" 
+    strokeLinecap="round"
     strokeLinejoin="round"
   >
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -384,64 +384,64 @@ const MessageList: React.FC = () => {
     //   });
     // };
     const handleMessage = (event: MessageEvent) => {
-  const data = JSON.parse(event.data);
-  if (data.type !== "new_message") return;
+      const data = JSON.parse(event.data);
+      if (data.type !== "new_message") return;
 
-  const {
-    from_user_id,
-    to_user_id,
-    from_username,
-    from_avatar,
-    to_username,
-    to_avatar,
-    content,
-    created_at,
-  } = data;
+      const {
+        from_user_id,
+        to_user_id,
+        from_username,
+        from_avatar,
+        to_username,
+        to_avatar,
+        content,
+        created_at,
+      } = data;
 
-  const partnerId =
-    from_user_id === accountId ? to_user_id : from_user_id;
+      const partnerId =
+        from_user_id === accountId ? to_user_id : from_user_id;
 
-  const partnerName =
-    from_user_id === accountId
-      ? to_username ?? "Người lạ"
-      : from_username ?? "Người lạ";
+      const partnerName =
+        from_user_id === accountId
+          ? to_username ?? "Người lạ"
+          : from_username ?? "Người lạ";
 
-  const partnerAvatar =
-    from_user_id === accountId
-      ? to_avatar ?? ""
-      : from_avatar ?? "";
+      const partnerAvatar =
+        from_user_id === accountId
+          ? to_avatar ?? ""
+          : from_avatar ?? "";
 
-  setConversations((prev) => {
-    const updated = [...prev];
-    const index = updated.findIndex(
-      (c) => c.partner_id === partnerId
-    );
+      setConversations((prev) => {
+        const updated = [...prev];
+        const index = updated.findIndex(
+          (c) => c.partner_id === partnerId
+        );
 
-    const newConv = {
-      partner_id: partnerId,
-      partner_name: partnerName,
-      partner_avatar: partnerAvatar,
-      last_message: content,
-      last_sender_id: from_user_id, // ⭐ QUAN TRỌNG
-      updated_at: created_at || new Date().toISOString(),
+        const newConv = {
+          partner_id: partnerId,
+          partner_name: partnerName,
+          partner_avatar: partnerAvatar,
+          last_message: content,
+          last_sender_id: from_user_id, // ⭐ QUAN TRỌNG
+          updated_at: created_at || new Date().toISOString(),
+        };
+
+        if (index >= 0) {
+          updated[index] = {
+            ...updated[index],
+            ...newConv,
+          };
+        } else {
+          updated.unshift(newConv);
+        }
+
+        return updated.sort(
+          (a, b) =>
+            new Date(b.updated_at).getTime() -
+            new Date(a.updated_at).getTime()
+        );
+      });
     };
-
-    if (index >= 0) {
-      updated[index] = {
-        ...updated[index],
-        ...newConv,
-      };
-    } else {
-      updated.unshift(newConv);
-    }
-
-    return updated.sort(
-      (a, b) =>
-        new Date(b.updated_at).getTime() -
-        new Date(a.updated_at).getTime()
-    );
-  });
-};
 
 
     chatSocket?.addEventListener("message", handleMessage);
@@ -459,7 +459,7 @@ const MessageList: React.FC = () => {
 
   if (conversations.length === 0)
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 p-4" style={{ minHeight: "55vh"}}>
+      <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 p-4" style={{ minHeight: "55vh" }}>
         <EmptyChatIcon />
 
         <h3 className="text-base font-semibold mb-2">
@@ -473,55 +473,119 @@ const MessageList: React.FC = () => {
     );
 
   return (
-    <ul className="space-y-3">
-      {conversations.map((conv) => {
-        const isPartnerTurn = conv.last_sender_id !== accountId; // nếu người gửi cuối cùng ≠ mình ⇒ Your move
-        return (
-          <Link
-            key={conv.partner_id}
-            to={`/chat/${conv.partner_id}?toUsername=${encodeURIComponent(
-              conv.partner_name ?? ""
-            )}&toAvatarUrl=${encodeURIComponent(
-              getAvatarImage(conv.partner_avatar?.title || conv.partner_avatar || "")
-            )}`}
-            onClick={() => {
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.partner_id === conv.partner_id
-          ? { ...c, last_sender_id: accountId } // ✅ mark as seen
-          : c
-      )
-    );
-  }}
-          >
-            <li className="flex items-start gap-3 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <img
-                src={
-                  conv.partner_avatar
-                    ? getAvatarImage(conv.partner_avatar.title || conv.partner_avatar)
-                    : "/images/default-avatar.png"
-                }
-                alt={conv.partner_name}
-                className="w-12 h-12 rounded-full object-cover border rounded-full"
-              />
-              <div className="flex-1 hidden md:block">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-sm">{conv.partner_name}</div>
-                  {isPartnerTurn && conv.last_message && (
-                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
-                      Đến lượt bạn
-                    </span>
-                  )}
+    // <ul className="space-y-3">
+    //   {conversations.map((conv) => {
+    //     const isPartnerTurn = conv.last_sender_id !== accountId; // nếu người gửi cuối cùng ≠ mình ⇒ Your move
+    //     return (
+    //       <Link
+    //         key={conv.partner_id}
+    //         // to={`/chat/${conv.partner_id}?toUsername=${encodeURIComponent(
+    //         //   conv.partner_name ?? ""
+    //         // )}&toAvatarUrl=${encodeURIComponent(
+    //         //   getAvatarImage(conv.partner_avatar?.title || conv.partner_avatar || "")
+    //         // )}`}
+    //         to={`/chat/${conv.partner_id}?toUsername=${encodeURIComponent(
+    //           conv.partner_name ?? ""
+    //         )}&toAvatarUrl=${encodeURIComponent(
+    //           conv.partner_avatar || ""
+    //         )}`}
+
+    //         onClick={() => {
+    //           setConversations((prev) =>
+    //             prev.map((c) =>
+    //               c.partner_id === conv.partner_id
+    //                 ? { ...c, last_sender_id: accountId } // ✅ mark as seen
+    //                 : c
+    //             )
+    //           );
+    //         }}
+    //       >
+    //         <li className="flex items-start gap-3 rounded-lg hover:bg-gray-50 cursor-pointer">
+    //           {/* <img
+    //             src={
+    //               conv.partner_avatar
+    //                 ? getAvatarImage(conv.partner_avatar.title || conv.partner_avatar)
+    //                 : "/images/default-avatar.png"
+    //             }
+    //             alt={conv.partner_name}
+    //             className="w-12 h-12 rounded-full object-cover border rounded-full"
+    //           /> */}
+    //           <img
+    //             src={conv.partner_avatar || "/images/default-avatar.png"}
+    //             alt={conv.partner_name}
+    //             className="w-12 h-12 rounded-full object-cover border"
+    //           />
+
+    //           <div className="flex-1 hidden md:block">
+    //             <div className="flex items-center justify-between">
+    //               <div className="font-medium text-sm">{conv.partner_name}</div>
+    //               {isPartnerTurn && conv.last_message && (
+    //                 <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+    //                   Đến lượt bạn
+    //                 </span>
+    //               )}
+    //             </div>
+    //             <div className="text-xs text-gray-500 mt-1 truncate max-w-[200px] sm:max-w-[190px]">
+    //               {conv.last_message || "Chưa có tin nhắn"}
+    //             </div>
+    //           </div>
+    //         </li>
+    //       </Link>
+    //     );
+    //   })}
+    // </ul>
+    <ul> {/* tăng spacing nếu muốn */}
+  {conversations.map((conv) => {
+    const isPartnerTurn = conv.last_sender_id !== accountId;
+
+    return (
+      <li key={conv.partner_id}>
+        <Link
+          to={`/chat/${conv.partner_id}?toUsername=${encodeURIComponent(
+            conv.partner_name ?? ""
+          )}&toAvatarUrl=${encodeURIComponent(conv.partner_avatar || "")}`}
+          onClick={() => {
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.partner_id === conv.partner_id
+                  ? { ...c, last_sender_id: accountId }
+                  : c
+              )
+            );
+          }}
+          className="block"  // ⭐ quan trọng
+        >
+          <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+            <img
+              src={conv.partner_avatar || "/images/default-avatar.png"}
+              alt={conv.partner_name}
+              className="w-12 h-12 rounded-full object-cover border"
+            />
+
+            <div className="flex-1 hidden md:block">
+              <div className="flex items-center justify-between">
+                <div className="font-medium text-sm">
+                  {conv.partner_name}
                 </div>
-                <div className="text-xs text-gray-500 mt-1 truncate max-w-[200px] sm:max-w-[190px]">
-                  {conv.last_message || "Chưa có tin nhắn"}
-                </div>
+
+                {isPartnerTurn && conv.last_message && (
+                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                    Đến lượt bạn
+                  </span>
+                )}
               </div>
-            </li>
-          </Link>
-        );
-      })}
-    </ul>
+
+              <div className="text-xs text-gray-500 mt-1 truncate max-w-[200px] sm:max-w-[190px]">
+                {conv.last_message || "Chưa có tin nhắn"}
+              </div>
+            </div>
+          </div>
+        </Link>
+      </li>
+    );
+  })}
+</ul>
+
   );
 };
 

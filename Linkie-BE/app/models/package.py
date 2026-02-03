@@ -31,5 +31,4 @@ class Package(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # chỉ dùng 1 relationship, dùng back_populates
     purchases = relationship("Purchase", back_populates="package")

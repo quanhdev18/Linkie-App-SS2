@@ -14,7 +14,7 @@ from sqlalchemy import func, extract
 from app.crud.EmailService import EmailService
 from fastapi import BackgroundTasks
 from datetime import datetime
-from app.security.AuthDependency import get_current_account # Giả sử cần user login để xem
+from app.security.AuthDependency import get_current_account 
 from app.models.UserModel import Account
 from datetime import datetime, timedelta
 from app.models.ProfileModel import Profile
@@ -40,7 +40,6 @@ def update_package(package_id: int, data: PackageCreate, db: Session = Depends(g
     if not package:
         raise HTTPException(status_code=404, detail="Package not found")
 
-    # Cập nhật các trường
     package.name = data.name
     package.description = data.description
     package.price = data.price
@@ -72,75 +71,6 @@ def paypal_callback(orderId: str, db: Session = Depends(get_db)):
         )
         return {"message": "PayPal payment failed", "status": "failed"}
     
-    
-# @router.post("/payment/visa")
-# def create_visa_payment(
-#     data: PurchaseCreate, 
-#     db: Session = Depends(get_db),
-#     current_user: Account = Depends(get_current_account),
-# ):
-#     package = db.query(Package).filter(Package.id == data.package_id).first()
-#     if not package:
-#         return {"error": "Package not found"}
-
-#     intent = create_stripe_payment_intent(package.price)
-    
-#     TEMP_EMAIL_STORE[intent["id"]] = data.email or current_user.email
-
-#     # ✅ Sử dụng user_id thực từ current_user
-#     purchase = create_purchase_stripe(
-#         db, 
-#         user_id=current_user.id, 
-#         package_id=package.id,
-#         stripe_payment_intent=intent["id"]
-#     )
-#     return {"client_secret": intent["client_secret"], "purchase_id": purchase.id}
-
-# @router.post("/payment/visa")
-# def create_visa_payment(
-#     data: PurchaseCreate,
-#     db: Session = Depends(get_db),
-#     current_user: Account = Depends(get_current_account),
-# ):
-#     package = db.query(Package).filter(Package.id == data.package_id).first()
-#     if not package:
-#         raise HTTPException(status_code=404, detail="Package not found")
-
-#     profile = db.query(Profile).filter(Profile.account_id == current_user.id).first()
-#     # gender = profile.gender if profile else None
-
-#     final_price = package.price
-
-#     if profile and profile.gender:
-#         gender = str(profile.gender).upper()
-#         package_name = package.name
-
-#         print("DEBUG gender:", gender)
-#         print("DEBUG package:", package_name)
-
-#         if gender == "FEMALE" and package_name in ["Plus", "Premium"]:
-#             final_price = int(package.price * 0.7)
-
-
-
-
-#     intent = create_stripe_payment_intent(final_price)
-#     TEMP_EMAIL_STORE[intent["id"]] = data.email or current_user.email
-
-#     purchase = create_purchase_stripe(
-#         db,
-#         user_id=current_user.id,
-#         package_id=package.id,
-#         stripe_payment_intent=intent["id"]
-#     )
-
-#     return {
-#         "client_secret": intent["client_secret"],
-#         "purchase_id": purchase.id,
-#         "original_price": package.price,
-#         "final_price": final_price,
-#         "discount_applied": final_price < package.price
-#     }
 @router.post("/payment/visa")
 def create_visa_payment(
     data: PurchaseCreate,
@@ -157,10 +87,9 @@ def create_visa_payment(
     final_price = original_price
 
     if profile and profile.gender:
-        # ✅ ENUM → string value
+
         gender = profile.gender.value.upper()
 
-        # ✅ Chuẩn hoá tên gói
         package_name = package.name
 
         print("DEBUG gender:", gender)
@@ -188,58 +117,6 @@ def create_visa_payment(
         "final_price": final_price,
         "discount_applied": final_price < original_price,
     }
-
-
-# @router.get("/payment/visa-callback")
-# async def visa_callback(
-#     payment_intent_id: str,
-#     background_tasks: BackgroundTasks,
-#     db: Session = Depends(get_db)
-# ):
-#     result = confirm_stripe_payment(payment_intent_id)
-
-#     if result["status"] == "success":
-#         # Cập nhật trạng thái purchase
-#         purchase = update_purchase_status_stripe(
-#             db,
-#             stripe_payment_intent=payment_intent_id,
-#             status="success",
-#             stripe_transaction_id=result["transaction_id"]
-#         )
-
-#         # Lấy thông tin user và package
-#         if not purchase:
-#             raise HTTPException(status_code=404, detail="Purchase not found")
-
-#         user_email = db.query(Package).join(Purchase, Purchase.package_id == Package.id)\
-#                         .filter(Purchase.id == purchase.id).first()
-      
-#         package = db.query(Package).filter(Package.id == purchase.package_id).first()
-#         if not package:
-#             raise HTTPException(status_code=404, detail="Package not found")
-
-#         user = db.query(Account).filter(Account.id == purchase.user_id).first()
-#         if user and user.email:
-#             email_service = EmailService()
-#             background_tasks.add_task(
-#                 email_service.send_invoice_email,
-#                 user.email,       # ✅ dùng email, không phải user_id
-#                 package.name,
-#                 # package.price
-#                 purchase.price_paid
-#             )
-
-#         return {"message": "Visa payment success", "status": "success"}
-
-#     else:
-#         # Nếu thất bại
-#         update_purchase_status_stripe(
-#             db,
-#             stripe_payment_intent=payment_intent_id,
-#             status="failed",
-#             stripe_transaction_id=result["transaction_id"]
-#         )
-#         return {"message": "Visa payment failed", "status": "failed"}
 
 @router.get("/payment/visa-callback")
 async def visa_callback(

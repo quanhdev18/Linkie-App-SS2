@@ -1,4 +1,3 @@
-# app/routers/account_controller.py
 from typing import Optional
 
 from fastapi import APIRouter, Depends, status, HTTPException, Request
@@ -18,7 +17,6 @@ router = APIRouter(
     prefix="/accounts",
     tags=["Accounts"]
 )
-
 
 @router.delete("/no-constraint/{email}", status_code=status.HTTP_200_OK)
 def delete_account_no_constraint_by_email(email: str, db: Session = Depends(get_db)):

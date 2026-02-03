@@ -1,0 +1,75 @@
+@startuml
+' Tối ưu hóa bố cục dọc để hình ảnh rõ nét trong báo cáo
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 40
+
+package "Backend Server (FastAPI)" {
+
+    package "app (Core Logic)" #LightBlue {
+        
+        package "routers (Tầng điều hướng)" #DeepSkyBlue {
+            [auth_routes]
+            [user_routes]
+            [match_routes]
+            note bottom: Tiếp nhận Request từ Client
+        }
+
+        package "schemas (Pydantic Models)" #SkyBlue {
+            [user_schema]
+            [auth_schema]
+            [response_dto]
+            note bottom: Định nghĩa cấu trúc Data (DTO)
+        }
+
+        package "crud (Tầng xử lý dữ liệu)" #Gold {
+            [user_crud]
+            [matching_logic]
+            [database_ops]
+            note bottom: Xử lý logic nghiệp vụ chính
+        }
+
+        package "models (Tầng thực thể)" #Tomato {
+            [user_model]
+            [match_model]
+            [base_config]
+            note bottom: Ánh xạ cấu trúc DB Supabase
+        }
+
+        package "Security & Core" <<Rectangle>> #White {
+            package "security" #Plum {
+                [jwt_handler]
+                [password_hash]
+            }
+            package "core" #Pink {
+                [config_env]
+                [database_conn]
+            }
+            package "enum" #LightGray {
+                [user_roles]
+                [match_status]
+            }
+        }
+
+        [main.py] #Yellow
+    }
+
+    package "Infrastructure" #AntiqueWhite {
+        [alembic (Migrations)]
+        [.env (Environment)]
+        [Dockerfile]
+        [requirements.txt]
+    }
+}
+
+' Thể hiện luồng xử lý của hệ thống
+"routers (Tầng điều hướng)" ..down..> "schemas (Pydantic Models)" : "Validate"
+"routers (Tầng điều hướng)" ..down..> "crud (Tầng xử lý dữ liệu)" : "Call Logic"
+"crud (Tầng xử lý dữ liệu)" ..down..> "models (Tầng thực thể)" : "Query DB"
+"crud (Tầng xử lý dữ liệu)" ..right..> "security" : "Authorize"
+"main.py" ..right..> "routers (Tầng điều hướng)" : "Include"
+
+@enduml

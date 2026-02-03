@@ -22,8 +22,7 @@ class ProfileImage(Base):
     url = Column(String, nullable=False)
     alt = Column(String)
     upload_date = Column(DateTime, default=datetime.utcnow)
-    
-    # ForeignKey liên kết về profile
+
     profile_id = Column(Integer, ForeignKey("profile.id", ondelete="CASCADE"), nullable=False)
 
     profile = relationship("Profile", back_populates="images")

@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.crud import AdviceService
 from app.schemas.AdviceDTO import DatingAdviceOut
-from app.security.AuthDependency import get_current_account # Giả sử cần user login để xem
+from app.security.AuthDependency import get_current_account 
 
 router = APIRouter(
     prefix="/dating-advice", 
     tags=["Dating Advice"],
-    dependencies=[Depends(get_current_account)] # Bỏ dependency này nếu không cần login
+    dependencies=[Depends(get_current_account)] 
 )
 
 @router.get("/", response_model=DatingAdviceOut)

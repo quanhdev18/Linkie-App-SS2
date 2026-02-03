@@ -1,0 +1,18 @@
+id,username,gender,date_of_birth,bio,created_at,target_type,hobby,avatar_id,account_id,pref_min_age,pref_max_age,pref_gender,pref_location_city,height,zodiac_sign,job,education,location_name
+1,Quang Anh dz,MALE,2003-12-01,HI iiiiiii tôi là quanh nè,2025-10-01 09:51:47+00,Một người bạn đời,"[""SINGING"",""READING"",""VIDEO_GAMES"",""FASHION"",""DOG_LOVER""]",26,1,18,35,,,175,CAPRICORN,,,"Phường Khương Đình, Hà Nội"
+2,Ngoc Mai,FEMALE,2005-12-06,hiiiiiiiiiiii,2025-10-02 15:28:37+00,Một người bạn đời,"[""YOGA"",""READING"",""PLAYING_GUITAR"",""RUNNING"",""SINGING""]",20,2,18,35,,,176,ARIES,Tester,DH Bach Khoa HN,"Phường Khương Đình, Hà Nội"
+3,Linh Mai,FEMALE,2004-06-15,Gaooo ồ,2025-10-07 14:07:34+00,Người yêu,"[""LISTENING_TO_MUSIC"",""YOGA"",""TRAVELING"",""VIDEO_GAMES"",""FASHION""]",37,3,18,35,,,170,CANCER,SPS,,"Phường Khương Đình, Hà Nội"
+4,Thanh Lam,FEMALE,2004-02-01,love u to the moon and back,2025-10-07 14:14:13+00,Người yêu,"[""READING"",""VIDEO_GAMES"",""TRAVELING"",""SINGING"",""MEDITATION""]",25,4,18,35,,,,,,,"Phường Ô Chợ Dừa, Hà Nội"
+5,Nam Tiến,MALE,2001-12-05,Im chicken guys,2025-10-11 02:02:14+00,Một người bạn đời,"[""LISTENING_TO_MUSIC"",""YOGA"",""TRAVELING"",""READING"",""COOKING""]",36,5,18,35,,,170,CAPRICORN,,,"Phường Khương Đình, Hà Nội"
+6,Lan Phng,FEMALE,2004-05-04,,2025-10-13 15:35:39.42456+00,,"[""MEDITATION"",""DOG_LOVER"",""VIDEO_GAMES"",""READING"",""PLAYING_GUITAR""]",,12,18,35,,,,,,,
+7,Em Gai,FEMALE,2006-05-14,xinh gai,2025-10-13 15:46:25.988631+00,Người yêu,"[""READING"",""TRAVELING"",""YOGA"",""LISTENING_TO_MUSIC"",""MEDITATION""]",,13,18,35,,,,,,,
+8,Thanh Huong,FEMALE,2004-06-15,,2025-11-07 07:19:49.096492+00,,"[""LISTENING_TO_MUSIC"",""RUNNING"",""PHOTOGRAPHY"",""MEDITATION"",""FASHION""]",34,14,18,35,"[""male"",""female"",""other""]",,,,saler,,
+9,dfdf,MALE,2003-12-12,dsd,2025-11-07 09:07:23.86462+00,dating,"[""VIDEO_GAMES"",""PHOTOGRAPHY"",""TRAVELING"",""LISTENING_TO_MUSIC""]",,18,18,35,"[""male"",""female"",""other""]",,,,,,
+10,Lhsheraa,FEMALE,2006-12-02,good girl,2025-11-07 12:43:39.37606+00,Người yêu,"[""LISTENING_TO_MUSIC"",""TRAVELING"",""PHOTOGRAPHY"",""READING"",""COOKING""]",11,19,18,35,"[""male"",""female"",""other""]",,,,,,
+11,Diễm Quỳnh,FEMALE,2003-12-06,"Quýt iu ",2025-11-07 13:26:15.022288+00,dating,"[""LISTENING_TO_MUSIC"",""TRAVELING"",""PHOTOGRAPHY"",""VIDEO_GAMES"",""READING""]",,20,18,35,"[""male"",""female"",""other""]",,,,,,
+12,Athony,MALE,2005-12-06,Hii,2025-11-07 13:33:08.335895+00,dating,"[""READING"",""COOKING"",""YOGA"",""FASHION"",""PHOTOGRAPHY""]",,21,18,35,"[""male"",""female"",""other""]",,,,,,
+13,Tuấn Tự Do,MALE,2000-12-09,hiiii,2025-11-07 16:35:52.922301+00,dating,"[""LISTENING_TO_MUSIC"",""PHOTOGRAPHY"",""TRAVELING"",""READING"",""COOKING""]",10,25,18,35,"[""male"",""female"",""other""]",,,,,,
+14,Nhật Minh,MALE,2001-02-08,"Nhat Minh on the sound ",2025-11-08 02:01:25.175627+00,dating,"[""LISTENING_TO_MUSIC"",""PHOTOGRAPHY"",""VIDEO_GAMES"",""READING"",""COOKING""]",12,26,18,35,"[""male"",""female"",""other""]",,,,,,
+15,Quang Thắng,MALE,2004-08-10,Get me bamy,2025-11-19 07:51:14.490628+00,Người yêu,"[""LISTENING_TO_MUSIC"",""TRAVELING"",""PHOTOGRAPHY"",""VIDEO_GAMES"",""COOKING""]",35,27,18,35,"[""male"",""female"",""other""]",,,,Sinh viên,,"Phường Khương Đình, Hà Nội"
+16,Quýt Thúi,FEMALE,2003-12-06,Thúiiiii,2025-11-20 15:12:46.660427+00,Người yêu,"[""LISTENING_TO_MUSIC"",""TRAVELING"",""PHOTOGRAPHY"",""VIDEO_GAMES"",""FASHION""]",,28,18,35,"[""male"",""female"",""other""]",,,,,,
+17,Quỳnh Cam,FEMALE,2003-12-06,Tiktok: Quỳnh Cam,2025-11-25 15:41:09.72796+00,Những người bạn mới,"[""LISTENING_TO_MUSIC"",""TRAVELING"",""PHOTOGRAPHY"",""VIDEO_GAMES"",""COOKING""]",,29,18,35,"[""male"",""female"",""other""]",,,,,,

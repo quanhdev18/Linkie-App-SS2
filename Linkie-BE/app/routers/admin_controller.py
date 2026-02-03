@@ -1,4 +1,3 @@
-# app/routers/admin_controller.py
 from fastapi import APIRouter, Depends
 from app.security.AuthDependency import require_role
 from app.models.UserModel import Account

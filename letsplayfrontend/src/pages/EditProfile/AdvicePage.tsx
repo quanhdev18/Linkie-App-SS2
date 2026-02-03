@@ -261,8 +261,8 @@ const AdvicePage = () => {
                         {/* FOOTER */}
                         <div className="flex justify-center items-center mt-10 text-gray-400 text-sm pb-10">
                             <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/1/19/Bumble_logo.svg"
-                                className="w-5 h-5 mr-2"
+                                src="https://cdn-icons-png.flaticon.com/512/8633/8633642.png"
+                                className="w-6 h-6 mr-2"
                             />
                             Tạo bởi Quang Anh ❤️
                         </div>

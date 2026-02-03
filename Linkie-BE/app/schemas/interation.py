@@ -7,7 +7,6 @@ class MatchedUserOut(BaseModel):
     id: int
     username: Optional[str]
     avatar_url: Optional[str] = None
-    # avatar: Optional[str]
 
     class Config:
         from_attributes = True
@@ -26,15 +25,12 @@ class LikedUserDetailOut(BaseModel):
     is_activated: bool
     role: str
 
-    # Avatar chỉ 1 ảnh
     avatar: Optional[ImageOut] = None
 
-    # Profile
     username: Optional[str] = None
     bio: Optional[str] = None
     gender: Optional[str] = None
 
-    # Profile Images
     images: List[ImageOut] = []
 
     liked_at: Optional[str] = None

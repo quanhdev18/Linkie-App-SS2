@@ -19,6 +19,40 @@ api.interceptors.request.use((config) => {
 });
 
 
+export const getAllImagesByAccountId = async (accountId) => {
+  const res = await api.get(`/images/account/${accountId}/all-images`);
+  return res.data;
+};
+
+
+// 🔥 AI Recommendations (LightFM)
+export const getAiRecommendations = async (userId) => {
+  const res = await api.get(`/matching/ai-recommendations/${userId}`);
+  return res.data;
+};
+
+
+export const getRecommendations = async ({
+  userId,
+  page = 1,
+  pageSize = 20,
+  minScore = 20,
+}) => {
+  const res = await api.get(
+    `/matching/recommendations/${userId}`,
+    {
+      params: {
+        page,
+        page_size: pageSize,
+        min_score: minScore,
+      },
+    }
+  );
+
+  return res.data;
+};
+
+
 export const createDailyStatus = async (content) => {
   const res = await api.post("/daily-status", { content });
   return res.data;
@@ -43,10 +77,35 @@ export const getExploreDailyStatus = async (limit = 50) => {
 };
 
 
-export const getSameTargetUsers = async () => {
+// export const getSameTargetUsers = async () => {
+//   try {
+//     const res = await api.get("/profiles/match-target");
+//     const { profiles, can_view_photos } = res.data;
+//     const formattedProfiles = profiles.map((user) => ({
+//       ...user,
+//       avatar_url: user.avatar?.url
+//         ? `${baseURL}/${user.avatar.url}`.replace(/\\/g, "/")
+//         : null,
+//     }));
+
+//     return {
+//       profiles: formattedProfiles,
+//       can_view_photos,
+//     };
+//   } catch (err) {
+//     console.error("Error getSameTargetUsers:", err);
+//     throw err;
+//   }
+// };
+
+export const getSameTargetUsers = async (page = 1) => {
   try {
-    const res = await api.get("/profiles/match-target");
-    const { profiles, can_view_photos } = res.data;
+    const res = await api.get("/profiles/match-target", {
+      params: { page, page_size: 9 },
+    });
+
+    const { profiles, can_view_photos, has_more } = res.data;
+
     const formattedProfiles = profiles.map((user) => ({
       ...user,
       avatar_url: user.avatar?.url
@@ -57,12 +116,14 @@ export const getSameTargetUsers = async () => {
     return {
       profiles: formattedProfiles,
       can_view_photos,
+      has_more,
     };
   } catch (err) {
     console.error("Error getSameTargetUsers:", err);
     throw err;
   }
 };
+
 
 {
   /* Dang ky/dang nhap */
@@ -336,22 +397,38 @@ export const uploadAvatar = async (accountId, imageFile) => {
   }
 };
 
+// export const getAvatarImage = (avatarData) => {
+//   if (!avatarData) return null;
+
+//   if (typeof avatarData === "object" && avatarData.id) {
+//     return `${baseURL}/images/account/${avatarData.id}`;
+//   }
+
+//   if (typeof avatarData === "number") {
+//     return `${baseURL}/images/account/${avatarData}`;
+//   }
+
+//   if (typeof avatarData === "string") {
+//     const filename = avatarData.split("\\").pop().split("/").pop();
+//     return `${baseURL}/static/images/avatar/${filename}`;
+//   }
+
+//   return null;
+// };
 export const getAvatarImage = (avatarData) => {
   if (!avatarData) return null;
 
+  // avatarData là object từ BE
   if (typeof avatarData === "object" && avatarData.id) {
     return `${baseURL}/images/account/${avatarData.id}`;
   }
 
+  // avatarData là id
   if (typeof avatarData === "number") {
     return `${baseURL}/images/account/${avatarData}`;
   }
 
-  if (typeof avatarData === "string") {
-    const filename = avatarData.split("\\").pop().split("/").pop();
-    return `${baseURL}/static/images/avatar/${filename}`;
-  }
-
+  // ❌ KHÔNG xử lý string path nữa
   return null;
 };
 
@@ -540,30 +617,51 @@ export const getDatingAdvice = async () => {
 };
 
 
-export const getUsersWhoLikedMe = async (userId) => {
-  console.log("📡 Gọi API getUsersWhoLikedMe với userId:", userId);
-  if (!userId) return [];
+// export const getUsersWhoLikedMe = async (userId) => {
+//   console.log("📡 Gọi API getUsersWhoLikedMe với userId:", userId);
+//   if (!userId) return [];
 
+//   try {
+//     const response = await api.get(`/interactions/liked-me/${userId}`);
+//     const data = response.data;
+
+//     // Chuyển avatar_url thành URL đầy đủ
+//     const formatted = data.map((user) => ({
+//       ...user,
+//       avatar_url: user.avatar?.url
+//         ? `${baseURL}/${user.avatar.url.replaceAll("\\", "/")}`
+//         : null,
+//     }));
+
+//     console.log("✅ Kết quả từ API liked-me (đã format avatar_url):", formatted);
+//     return formatted;
+//   } catch (error) {
+//     console.error("❌ Lỗi khi lấy danh sách người đã thích mình:", error);
+//     return [];
+//   }
+// };
+
+// export const getWhoLikedMe = async (user_id) => {
+//   try {
+//     const res = await api.get(`/matching/who-liked-me/${user_id}`);
+//     return res.data;
+//   } catch (error) {
+//     console.error("Lỗi API getWhoLikedMe:", error.message);
+//     throw error;
+//   }
+// };
+
+export const getWhoLikedMe = async (user_id, page = 1) => {
   try {
-    const response = await api.get(`/interactions/liked-me/${userId}`);
-    const data = response.data;
-
-    // Chuyển avatar_url thành URL đầy đủ
-    const formatted = data.map((user) => ({
-      ...user,
-      avatar_url: user.avatar?.url
-        ? `${baseURL}/${user.avatar.url.replaceAll("\\", "/")}`
-        : null,
-    }));
-
-    console.log("✅ Kết quả từ API liked-me (đã format avatar_url):", formatted);
-    return formatted;
+    const res = await api.get(
+      `/matching/who-liked-me/${user_id}?page=${page}`
+    );
+    return res.data;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy danh sách người đã thích mình:", error);
-    return [];
+    console.error("Lỗi API getWhoLikedMe:", error.message);
+    throw error;
   }
 };
-
 
 
 export const getVerifyStatus = async (accountId) => {

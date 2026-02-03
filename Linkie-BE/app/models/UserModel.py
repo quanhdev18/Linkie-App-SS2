@@ -13,12 +13,10 @@ class Account(Base):
     is_activated = Column(Boolean, default=False)
     
     is_verified = Column(Boolean, default=False, nullable=False)
-    verification_status = Column(String, nullable=True) # e.g., 'pending'
-    pending_image_path = Column(String, nullable=True) # e.g., 'pending_review/1_peace.jpg'
-    pending_pose = Column(String, nullable=True) # e.g., 'peace_sign'
+    verification_status = Column(String, nullable=True) 
+    pending_image_path = Column(String, nullable=True) 
+    pending_pose = Column(String, nullable=True) 
     
-
-    #relationship
     otp = relationship("Otp", back_populates="account", uselist=False)
     refresh_token = relationship("RefreshToken", back_populates="account", uselist=False)
     notifications = relationship("Notification", back_populates="recipient")

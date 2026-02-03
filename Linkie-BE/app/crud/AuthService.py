@@ -44,7 +44,6 @@ async def send_otp_email(request: SendOtpRequest, db: Session):
     db.add(otp)
     db.commit()
 
-    # Gửi email
     import asyncio
     asyncio.create_task(email_service.send_email_otp(email=account.email, otp=otp_code))
 
@@ -62,24 +61,16 @@ def verify_email_by_otp(request: VerifyOtpRequest, db: Session) -> AuthResponse:
         db.commit()
         raise HTTPException(status_code=400, detail="OTP expired")
 
-    # OTP is valid → delete it
     db.delete(otp_entry)
     db.commit()
 
-    # Create a new null profile
-    # Tạo profile nếu chưa có
     existing_profile = db.query(Profile).filter_by(account_id=account.id).first()
-    # profile = existing_profile
-   
 
-    # Sửa trường is_activated = true
     account.is_activated = True
 
-    # Access & Refresh Token
     access_token = jwt_service.create_access_token(subject=account.email)
     refresh_token_str = jwt_service.create_refresh_token(subject=account.email)
 
-    # Lưu refresh token vào DB (nếu chưa có thì tạo mới, nếu có thì cập nhật)
     refresh = db.query(RefreshToken).filter(RefreshToken.account_id == account.id).first()
     expires_at = datetime.utcnow() + timedelta(hours=jwt_service.refresh_token_expire_hours)
 
@@ -95,8 +86,6 @@ def verify_email_by_otp(request: VerifyOtpRequest, db: Session) -> AuthResponse:
         db.add(refresh)
 
     db.commit()
-    # profile có thể là new_profile hoặc existing_profile
-    # profile = new_profile if not existing_profile else existing_profile
 
     return AuthResponse(
         access_token=access_token,
@@ -121,15 +110,12 @@ def verify_otp_and_login(request: VerifyOtpRequest, db: Session) -> AuthResponse
         raise HTTPException(status_code=400, detail="OTP expired")
 
 
-    # OTP is valid → delete it
     db.delete(otp_entry)
     db.commit()
 
-    # Access & Refresh Token
     access_token = jwt_service.create_access_token(subject=account.email)
     refresh_token_str = jwt_service.create_refresh_token(subject=account.email)
 
-    # Save/Update refresh token
     refresh = db.query(RefreshToken).filter(RefreshToken.account_id == account.id).first()
     expires_at = datetime.utcnow() + timedelta(hours=jwt_service.refresh_token_expire_hours)
 
@@ -146,7 +132,6 @@ def verify_otp_and_login(request: VerifyOtpRequest, db: Session) -> AuthResponse
 
     db.commit()
 
-    # 🔍 Lấy profile_id
     profile = db.query(Profile).filter(Profile.account_id == account.id).first()
     profile_id = profile.id if profile else None
 
@@ -178,7 +163,6 @@ def verify_otp_and_login_admin(request: VerifyOtpRequest, db: Session) -> AuthRe
                 detail="Only admin accounts can access this system."
             )
 
-    # ✅ Không giới hạn role (user hoặc admin đều được)
     db.delete(otp_entry)
     db.commit()
 
@@ -214,7 +198,6 @@ def verify_otp_and_login_admin(request: VerifyOtpRequest, db: Session) -> AuthRe
 
 
 def register_user(user_data: AccountRegister, db: Session):
-    # Kiểm tra email hoặc username đã tồn tại
     if db.query(Account).filter(Account.email == user_data.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 

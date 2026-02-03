@@ -13,11 +13,8 @@ class Location(Base):
     longitude = Column(Float, nullable=False)
     last_updated = Column(DateTime, default=datetime.utcnow)
 
-    # Khóa ngoại liên kết với bảng Account
     account_id = Column(Integer, ForeignKey('account.id'), nullable=False)
 
-    # Trường Geography (POINT) để lưu trữ vị trí
     point = Column(Geography(geometry_type="POINT", srid=4326))
 
-    # Quan hệ với bảng Account
     account = relationship("Account", back_populates="location")

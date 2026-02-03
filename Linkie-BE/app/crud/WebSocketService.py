@@ -8,11 +8,9 @@ class WebSocketManager:
     async def connect(self, websocket: WebSocket, user_id: int, conn_type: str):
         await websocket.accept()
 
-        # Chỉ tạo dict mới nếu chưa tồn tại user_id
         if user_id not in self.active_connections:
             self.active_connections[user_id] = {}
 
-        # Gán conn_type mà không ghi đè dict cũ
         self.active_connections[user_id][conn_type] = websocket
 
 

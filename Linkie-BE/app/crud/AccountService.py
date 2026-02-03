@@ -19,7 +19,6 @@ def delete_account_no_constraint_by_email_service(email: str, db: Session) -> St
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
-    # Nếu tồn tại bất kỳ liên kết nào → KHÔNG xoá
     linked_tables = []
 
     if db.query(Otp).filter(Otp.account_id == account.id).first():
@@ -40,7 +39,6 @@ def delete_account_no_constraint_by_email_service(email: str, db: Session) -> St
             detail=f"Cannot delete account. Linked records exist in: {', '.join(linked_tables)}"
         )
 
-    # Nếu không bị liên kết → xoá bình thường
     db.delete(account)
     db.commit()
     return f"Account with ID {email} deleted successfully"
@@ -53,12 +51,10 @@ def delete_account_with_otp_constraint(email: str, db: Session) -> String:
 
     account_id = account.id
 
-    # Xoá OTP nếu có
     otp = db.query(Otp).filter(Otp.account_id == account_id).first()
     if otp:
         db.delete(otp)
 
-    # Cuối cùng xoá Account
     db.delete(account)
     db.commit()
 
@@ -96,10 +92,7 @@ def deactivate_account_by_email(email: str, db: Session) -> str:
     if not account.is_activated:
         raise HTTPException(status_code=400, detail="Account is already deactivated")
 
-    # Đổi trạng thái kích hoạt
     account.is_activated = False
-
-    # Thêm hậu tố để đánh dấu đã xoá + tránh trùng email
     timestamp = int(time.time())
     account.email = f"{account.email}__deleted__{timestamp}"
 
@@ -130,7 +123,6 @@ def set_account_verified(db: Session, account_id: int) -> Account:
         account.is_verified = True
         account.verification_status = "verified"
         
-        # Xóa file ảnh tạm trong pending_review
         if account.pending_image_path and os.path.exists(account.pending_image_path):
             os.remove(account.pending_image_path)
             
@@ -147,17 +139,14 @@ async def get_verify_status(db: Session, account_id: int):
     return account.is_verified
 
 def register_user(user_data, db: Session):
-    # 1️⃣ Tạo account mới
     new_user = Account(email=user_data.email)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    # 2️⃣ Lấy tất cả admin
     admins = db.query(Account).filter(Account.role == "ADMIN").all()
 
     for admin in admins:
-        # 3️⃣ Tạo notification trong DB
         notif = Notification(
             content=f"Người dùng mới đăng ký: {new_user.email}",
             recipient_id=admin.id
@@ -166,7 +155,6 @@ def register_user(user_data, db: Session):
         db.commit()
         db.refresh(notif)
 
-        # 4️⃣ Gửi realtime qua WebSocket nếu admin đang kết nối
         import asyncio
         asyncio.create_task(
             ws_manager.send_to(admin.id, "notification", notif.content)

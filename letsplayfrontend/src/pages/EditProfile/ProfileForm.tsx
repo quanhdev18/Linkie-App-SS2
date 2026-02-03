@@ -535,6 +535,10 @@ const ProfileForm = () => {
                 />
               ))}
             </div>
+            <p className="text-s text-yellow-500 text-center pt-5">
+    Thêm 1 ảnh đại diện và 5 ảnh hồ sơ!
+  </p>
+
 
             <button
               onClick={() => navigate("/profile/preview")}

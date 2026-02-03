@@ -3,6 +3,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from app.crud.ProfileService import get_profile_by_account_id
 
 from app.core.database import get_db
 from app.crud.ProfileService import get_all_profiles, create_profile, update_profile, delete_profile, get_profile_by_id
@@ -14,6 +15,17 @@ from app.models.ProfileModel import Profile
 from app.crud.ProfileService import get_profiles_with_same_target
 
 router = APIRouter(prefix="/profiles", tags=["Profiles"], dependencies=[Depends(get_current_account)])
+
+@router.get(
+    "/by-account/{account_id}",
+    response_model=ProfileOut
+)
+def read_profile_by_account_id(
+    account_id: int,
+    db: Session = Depends(get_db)
+):
+    return get_profile_by_account_id(db, account_id)
+
 
 @router.get("/", response_model=List[ProfileOut])
 def read_profiles(db: Session = Depends(get_db)):
@@ -38,21 +50,7 @@ def get_same_target_users(
 ):
     return get_profiles_with_same_target(db, current_account.id)
 
-
 @router.get("/{profile_id}", response_model=ProfileOut)
 def read_profile_by_id(profile_id: int, db: Session = Depends(get_db)):
     return get_profile_by_id(db=db, profile_id=profile_id)
 
-
-
-
-
-
-# @router.get("/profiles/{id}") 
-# def read_profile_by_id(id: int, db: Session = Depends(get_db)): # (Biến "id" ở đây là account_id)
-    
-#     profile = db.query(Profile).filter(Profile.account_id == id).first() 
-    
-#     if not profile:
-#         raise HTTPException(status_code=404, detail="Profile not found for this account")
-#     return profile

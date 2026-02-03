@@ -1,0 +1,192 @@
+' @startuml
+' skinparam packageStyle rectangle
+' skinparam shadowing false
+' skinparam linetype polyline
+
+' package "Mobile App (React Native - Expo)" {
+    
+'     package "app (Routing)" #LightBlue {
+'         package "(auth)" {
+'             [sign-in]
+'             [sign-up]
+'             [verify-otp]
+'         }
+'         package "(calls)" #SkyBlue {
+'             [VideoCall]
+'             [VoiceCall]
+'         }
+'         package "(tabs)" #SkyBlue {
+'             package "(chats)" #LightCyan {
+'                 [index] 
+'                 [ReportUser]
+'             }
+'             [discover]
+'             [people]
+'             [profile]
+'         }
+'         package "(payment)" {
+'             [PremiumPayment]
+'             [PaymentSuccess]
+'         }
+'         package "(fill)" {
+'             [About]
+'             [Hoping]
+'             [Gender]
+'             [Profile]
+'             [Select]
+'             [Upload]
+'             [Map]
+'         }
+'         package "(verify)" #MediumPurple {
+'             [VerificationCameraScreen]
+'         }
+'         package "Screen" #DeepSkyBlue {
+'             [edit-profile]
+'             [matchPopup]
+'             [settingsScreen]
+'         }
+'     }
+
+'     package "components" #LightGreen {
+'         package "ui" {
+'             [Button]
+'             [Avatar]
+'             [IconSymbol]
+'         }
+'         package "profile" {
+'             [DatingAdvice]
+'         }
+'         [UserCard]
+'         [PeopleCard]
+'     }
+
+'     package "context" #Pink {
+'         [profileContext]
+'         [ThemeContext]
+'     }
+
+'     package "hooks" #Plum {
+'         [useColorScheme]
+'         [useThemeColor]
+'     }
+
+'     package "constants" #LightGray {
+'         [Colors]
+'         [zego]
+'     }
+
+'     package "assets" #AntiqueWhite {
+'         [images]
+'         [fonts]
+'     }
+' }
+
+' ' Thể hiện các mối quan hệ phụ thuộc
+' "app (Routing)" ..> "components" : "UI Elements"
+' "app (Routing)" ..> "context" : "Global State"
+' "app (Routing)" ..> "hooks" : "Logic"
+' "components" ..> "constants" : "Config"
+' "app (Routing)" ..> "constants" : "zego/colors config"
+
+' @enduml
+
+@startuml
+' Tối ưu hóa layout để không bị dài ngang
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+' Ép sơ đồ vẽ theo chiều dọc
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 40
+
+package "Mobile App (React Native - Expo)" {
+    
+    package "app (Routing)" #LightBlue {
+        package "(auth)" {
+            [sign-in]
+            [sign-up]
+            [verify-otp]
+        }
+        package "(calls)" #SkyBlue {
+            [VideoCall]
+            [VoiceCall]
+        }
+        package "(tabs)" #SkyBlue {
+            package "(chats)" #LightCyan {
+                [index] 
+                [ReportUser]
+            }
+            [discover]
+            [people]
+            [profile]
+        }
+        package "(payment)" {
+            [PremiumPayment]
+            [PaymentSuccess]
+        }
+        package "(fill)" {
+            [About]
+            [Hoping]
+            [Gender]
+            [Profile]
+            [Select]
+            [Upload]
+            [Map]
+        }
+        package "(verify)" #MediumPurple {
+            [VerificationCameraScreen]
+        }
+        package "Screen" #DeepSkyBlue {
+            [edit-profile]
+            [matchPopup]
+            [settingsScreen]
+        }
+    }
+
+    ' Dùng dấu --- để ép các khối này xuống dưới khối app (Routing)
+    "app (Routing)" -[hidden]down--- "Support_Layers"
+
+    package "Support_Layers" <<Cloud>> #White {
+        package "components" #LightGreen {
+            package "ui" {
+                [Button]
+                [Avatar]
+                [IconSymbol]
+            }
+            package "profile" {
+                [DatingAdvice]
+            }
+            [UserCard]
+            [PeopleCard]
+        }
+
+        package "context" #Pink {
+            [profileContext]
+            [ThemeContext]
+        }
+
+        package "hooks" #Plum {
+            [useColorScheme]
+            [useThemeColor]
+        }
+
+        package "constants" #LightGray {
+            [Colors]
+            [zego]
+        }
+
+        package "assets" #AntiqueWhite {
+            [images]
+            [fonts]
+        }
+    }
+}
+
+' Thể hiện các mối quan hệ phụ thuộc (dùng hướng mũi tên để điều chỉnh layout)
+"app (Routing)" ..down..> "components" : "UI Elements"
+"app (Routing)" ..down..> "context" : "Global State"
+"app (Routing)" ..down..> "hooks" : "Logic"
+"components" ..right..> "constants" : "Config"
+
+@enduml

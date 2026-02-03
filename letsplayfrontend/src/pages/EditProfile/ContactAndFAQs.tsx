@@ -330,9 +330,9 @@ const ContactAndFAQs = () => {
             <div className="flex justify-center items-center mt-6 text-gray-400 text-sm pb-10">
               {/* Sử dụng thẻ img và nguồn ảnh tượng trưng giống SettingsPage */}
               <img
-                src="https://upload.wikimedia.org/wikipedia/commons/1/19/Bumble_logo.svg"
+                src="https://cdn-icons-png.flaticon.com/512/8633/8633642.png"
                 alt="logo"
-                className="w-5 h-5 mr-2"
+                className="w-6 h-6 mr-2"
               />
               Tạo bởi Quang Anh ❤️
             </div>

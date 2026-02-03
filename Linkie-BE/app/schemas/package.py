@@ -18,7 +18,7 @@ class PackageOut(BaseModel):
 
 class PurchaseCreate(BaseModel):
     package_id: int
-    email: EmailStr | None = None  # trường email tùy chọn
+    email: EmailStr | None = None  
 
 class PurchaseOut(BaseModel):
     id: int

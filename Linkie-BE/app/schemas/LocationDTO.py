@@ -21,11 +21,8 @@ class NearbyUserOut(BaseModel):
     email: str
     is_activated: bool
     role: str
-    
-    # Avatar từ bảng account_avatar
+    profile_id: Optional[int] = None
     avatar: Optional[ImageOut] = None
-    
-    # Profile
     username: Optional[str] = None
     bio: Optional[str] = None
     gender: Optional[str] = None

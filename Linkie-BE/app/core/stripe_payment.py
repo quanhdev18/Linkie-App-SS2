@@ -1,11 +1,9 @@
-# app/core/stripe_payment.py
 import os
 import stripe
 from dotenv import load_dotenv
-# Lấy API key từ env (sandbox/test key)
+
 load_dotenv()
 
-# Lấy API key từ env
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 stripe.api_key = STRIPE_SECRET_KEY
 
@@ -14,7 +12,7 @@ def create_stripe_payment_intent(amount_vnd: int, currency: str = "vnd"):
     """
     Tạo PaymentIntent để thanh toán bằng thẻ Visa (Stripe).
     """
-    # Đảm bảo amount là số nguyên
+
     amount_int = int(amount_vnd)
 
     intent = stripe.PaymentIntent.create(
@@ -23,7 +21,7 @@ def create_stripe_payment_intent(amount_vnd: int, currency: str = "vnd"):
         payment_method_types=["card"]
     )
     return {
-        "client_secret": intent.client_secret,  # 👈 TRẢ CÁI NÀY
+        "client_secret": intent.client_secret,  
         "id": intent.id,
     }
 

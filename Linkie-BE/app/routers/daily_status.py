@@ -18,7 +18,6 @@ def create_daily_status(
 ):
     now = datetime.utcnow()
 
-    # check active status
     existing = db.query(DailyStatus).filter(
         DailyStatus.user_id == current_user.id,
         DailyStatus.is_active == True,

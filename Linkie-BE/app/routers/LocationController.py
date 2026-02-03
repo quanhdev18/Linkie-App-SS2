@@ -14,12 +14,6 @@ router = APIRouter(
 )
 
 
-# @router.post("/update_location/{account_id}", response_model=LocationOut)
-# def update_location(account_id: int, latitude: float, longitude: float, db: Session = Depends(get_db)):
-#     location = LocationService.update_location(account_id, latitude, longitude, db)
-#     if not location:
-#         raise HTTPException(status_code=404, detail="Account not found")
-#     return location
 @router.post("/update_location/{account_id}", response_model=LocationOut)
 def update_location(
     account_id: int,

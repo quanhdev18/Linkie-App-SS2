@@ -43,14 +43,12 @@ def get_conversations(user_id: int, db: Session = Depends(get_db)):
         if partner_id not in conv_dict:
             partner_account = db.query(Account).filter(Account.id == partner_id).first()
 
-            # name
             partner_name = None
             if partner_account and partner_account.profile:
                 partner_name = partner_account.profile.username
             else:
                 partner_name = "Ẩn danh"
 
-            # avatar url
             avatar_url = None
             if partner_account and partner_account.avatar:
                 avatar_url = partner_account.avatar.url
@@ -58,7 +56,7 @@ def get_conversations(user_id: int, db: Session = Depends(get_db)):
             conv_dict[partner_id] = {
                 "partner_id": partner_id,
                 "partner_name": partner_name,
-                "partner_avatar": avatar_url,  # link đầy đủ
+                "partner_avatar": avatar_url,  
                 "last_message": m.content,
                 "last_time": m.timestamp,
                 "last_sender_id": m.from_user_id,
