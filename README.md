@@ -3,7 +3,7 @@ Linkie là một nền tảng hẹn hò hiện đại, giúp kết nối những
 
 📺 Video Demo
 Bạn có thể xem chi tiết cách hoạt động của ứng dụng tại đây:
-Linkie Dating App - Demo Video
+Linkie Dating App - Demo Video https://youtu.be/3UDGcFlQS0o 
 
 ✨ Tính năng nổi bật
 1. Đăng nhập & Xác thực an toàn [00:02]
